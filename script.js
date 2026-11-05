@@ -43,7 +43,6 @@ const A=ACC[S.acc],ty=A.ddType||'static',tg=A.target||0,
 t=T().slice().sort((a,b)=>a.date.localeCompare(b.date));
 let eq=A.bal,pk=eq;
 t.forEach(x=>{eq+=x.pnl;pk=Math.max(pk,eq)});
-/* trailing: floor naik mengikuti equity tertinggi, berhenti (lock) di balance awal */
 const floor=ty=='trailing'?Math.min(pk-A.dd,A.bal):A.bal-A.dd,
 left=eq-floor,used=Math.max(0,A.dd-left),
 pct=A.dd?used/A.dd:0,profit=eq-A.bal,tp=tg?profit/tg:0;
@@ -67,6 +66,7 @@ dc=d.pct>=.8?'var(--rd)':d.pct>=.5?'var(--yl)':'var(--gn)';
 return`<div class="grid ge" style="margin-bottom:14px"><div class="card"><div class="row sp"><div class="lab">Drawdown ${d.ty=='trailing'?'Trailing':'Static'}</div><span class="sm">Floor ${fa(Math.round(d.floor))}</span></div><div class="big" style="color:${dc}">${fa(Math.round(d.used))} <span class="sm">/ ${fa(A.dd)}</span></div><div class="bar" style="margin-top:10px"><i style="width:${dp}%;background:${dc}"></i></div><div class="sm" style="margin-top:8px">Sisa ruang: ${fa(Math.max(0,Math.round(d.left)))}</div></div>
 <div class="card"><div class="row sp"><div class="lab">Target Profit</div><span class="sm">${d.tg?fa(d.tg):'Belum diatur'}</span></div><div class="big gn">${d.tg?Math.max(0,Math.round(d.tp*100))+'%':'–'} <span class="sm">${d.tg?fm(Math.round(d.profit)):''}</span></div><div class="bar" style="margin-top:10px"><i style="width:${tpp}%;background:var(--gn)"></i></div><div class="sm" style="margin-top:8px">${d.tg?(d.tp>=1?'Target tercapai 🎉':'Sisa: '+fa(Math.max(0,Math.round(d.tg-d.profit)))):'Atur di Settings → Accounts'}</div></div></div>`}
 function notify(){const a=alerts();if(a.length)toast(a[0][1].replace(/^\S+\s/,''))}
+
 const V={
 dashboard(){const s=st(T());if(!s.n)return empty('Belum ada trade di akun ini.');const A=ACC[S.acc];
 return`<div class="row sp" style="margin-bottom:14px"><div><b style="font-size:16px">${esc(S.acc)}</b> <span class="sm">· ${A.type} · Balance awal ${fa(A.bal)}</span></div></div>${bn()}${riskCards()}<div class="grid g4">${card('Current Equity',fa(s.eq))}${card('Total P&L',fm(s.tot),cls(s.tot))}${card('Weekly P&L',fm(wk()),cls(wk()))}${card('Monthly P&L',fm(mo()),cls(mo()))}${card('Win Rate',s.wr+'%')}${card('Profit Factor',s.pf)}${card('Average RR',s.rr)}<div class="card"><div class="lab">Max Drawdown / Limit</div><div class="big rd">${fa(s.dd)} <span class="sm">/ ${fa(A.dd)}</span></div><div class="bar" style="margin-top:10px"><i style="width:${Math.min(100,A.dd?s.dd/A.dd*100:0)}%;background:var(--rd)"></i></div></div>${card('Total Trades',s.n)}${card('Winning / Losing',s.w+' / '+s.l)}${card('Biggest Win',fm(s.bw),'gn')}${card('Biggest Loss',fm(s.bl),'rd')}</div>
@@ -75,20 +75,14 @@ return`<div class="row sp" style="margin-bottom:14px"><div><b style="font-size:1
 analytics(){const s=st(T());if(!s.n)return empty('Analytics muncul setelah ada trade.');const ex=Math.round(s.wr/100*s.aw+(100-s.wr)/100*s.al),sr=by('sess');
 return`<div class="grid g4">${card('Win Rate',s.wr+'%','gn')}${card('Loss Rate',(100-s.wr)+'%','rd')}${card('Profit Factor',s.pf)}${card('Expectancy',fm(ex),cls(ex))}${card('Average Win',fm(s.aw),'gn')}${card('Average Loss',fm(s.al),'rd')}${card('Best Session',sr[0][0])}${card('Worst Session',sr[sr.length-1][0])}</div>
 <div class="grid ge" style="margin-top:14px"><div class="card"><b>Performance by Session</b>${bars(sr)}</div><div class="card"><b>Performance by Symbol</b>${bars(by('sym'))}</div><div class="card"><b>Performance by Confluence</b>${bars(by('conf',1))}</div><div class="card"><b>Performance by Emotion</b>${bars(by('emo'))}</div></div>`},
-journal(){return`<div class="row tb" style="margin-bottom:14px"><input style="flex:1;min-width:150px;max-width:320px" placeholder="Search symbol, strategy…" value="${esc(S.q)}" oninput="S.q=this.value;S.pg=0;$('#jt').innerHTML=jtab()"><div class="seg">${[['all','All'],['w','Profit'],['l','Loss']].map(r=>`<button class="${S.res==r[0]?'on':''}" onclick="S.res='${r[0]}';S.pg=0;render()">${r[1]}</button>`).join('')}</div><select style="width:auto" onchange="S.ses=this.value;S.pg=0;render()">${['all','Asia','London','New York','Outside Session'].map(o=>`<option ${S.ses==o?'selected':''} value="${o}">${o=='all'?'All sessions':o}</option>`).join('')}</select></div><div class="card sc" style="padding:6px 12px" id="jt">${jtab()}</div>`},
-add(){const pro=S.mode=='pro',f=S.form,I=(n,l,p='',m='decimal')=>`<div class="f"><label>${l}</label><input name="${n}" inputmode="${m}" autocomplete="off" placeholder="${p}" value="${esc(f[n])}" oninput="S.form.${n}=this.value"></div>`,C=(n,o)=>`<div class="chips">${o.map(x=>`<button type="button" class="chip ${f[n]==x?'on':''}" onclick="S.form.${n}='${x}';render()">${x}</button>`).join('')}</div>`,
-dz=(k,l)=>f[k]?`<div class="f"><label>${l}</label><div class="pv"><img src="${f[k]}"><button class="ib" onclick="S.form.${k}=null;render()">Remove</button></div></div>`:`<div class="f"><label>${l}</label><div class="drop" onmouseenter="S.zone='${k}'" ondragover="event.preventDefault();this.classList.add('ov')" ondragleave="this.classList.remove('ov')" ondrop="event.preventDefault();setShot('${k}',event.dataTransfer.files[0])" onclick="this.querySelector('input').click()">${ic('up')}<div>Drag a screenshot here, click to upload, or paste with Ctrl/Cmd+V</div><input type="file" accept="image/*" hidden onchange="setShot('${k}',this.files[0])"></div></div>`;
+journal(){return`<div class="row tb" style="margin-bottom:14px"><input style="flex:1;min-width:150px;max-width:320px" placeholder="Search symbol, strategy…" value="${esc(S.q)}" oninput="S.q=this.value;S.pg=0;$('#jt').innerHTML=jtab()"><div class="seg">${[['all','All'],['w','Profit'],['l','Loss']].map(r=>`<button class="${S.res==r[0]?'on':''}" onclick="S.res='${r[0]}';S.pg=0;render()">${r[1]}</button>`).join('')}</div><select style="width:auto" onchange="S.ses=this.value;S.pg=0;render()">${['all','Asia','London','New York','NY AM','NY PM','No session','Outside Session'].map(o=>`<option ${S.ses==o?'selected':''} value="${o}">${o=='all'?'All sessions':o}</option>`).join('')}</select></div><div class="card sc" style="padding:6px 12px" id="jt">${jtab()}</div>`},
+add(){const pro=S.mode=='pro',f=S.form,I=(n,l,p='',m='decimal')=>`<div class="f"><label>${l}</label><input name="${n}" inputmode="${m}" autocomplete="off" placeholder="${p}" value="${esc(f[n])}" oninput="S.form.${n}=this.value"></div>`,C=(n,o)=>`<div class="chips">${o.map(x=>`<button type="button" class="chip ${f[n]==x?'on':''}" onclick="S.form.${n}='${x}';render()">${x}</button>`).join('')}</div>`;
 return`<div class="row sp" style="margin-bottom:14px"><div class="seg"><button class="${!pro?'on':''}" onclick="S.mode='basic';render()">Basic Mode</button><button class="${pro?'on':''}" onclick="S.mode='pro';render()">Pro Mode</button></div><span class="sm">${S.edit?'Editing trade #'+S.edit+' · ':''}Akun: ${esc(S.acc)} · Data tetap tersimpan saat pindah mode</span></div>
 <div class="card"><div class="grid ge"><div>${I('sym','Trading Pair / Symbol','XAUUSD','text')}<div class="f"><label>Buy / Sell</label>${C('dir',['Buy','Sell'])}</div>${I('date','Date (YYYY-MM-DD)','','text')}${I('entry','Entry Price','0.00')}${I('exit','Exit Price','0.00')}</div><div>${I('pnl','P&L','mis. 1515 atau -200')}${I('rr','Risk Reward (RR)','mis. 2.4')}${I('lot','Lot Size','0.50')}${I('strat','Strategy (otomatis masuk ke menu Strategies)','mis. London Sweep + FVG','text').replace('autocomplete="off"','list="sl" autocomplete="off"')}<datalist id="sl">${groups().map(g=>`<option value="${esc(g.n)}">`).join('')}</datalist></div></div>
 <div class="f"><label>Trading Session</label>${C('sess',['Asia','London','New York','Outside Session'])}</div><div class="f"><label>Emotion</label>${C('emo',['Disciplined','Calm','Confident','Greedy','Fearful','Revenge Trading','Gambling','Other'])}</div>
 <div class="f"><label>Confluence (ketik lalu Enter)</label><input placeholder="mis. FVG, SMT, Order Block" autocomplete="off" onkeydown="if(event.key=='Enter'){addTag(this.value);this.value=''}"><div class="tags" id="tags"></div><div class="tags">${['FVG','IFVG','SMT','Liquidity Sweep','CISD','Order Block','BOS','CHOCH'].map(x=>`<span class="tag sug" onclick="addTag('${x}')">+ ${x}</span>`).join('')}</div></div>
-${dz('shot','Screenshot')}
-${pro?`<hr style="border:0;border-top:1px solid var(--bd);margin:18px 0"><b>Pro Mode</b><div class="grid ge" style="margin-top:14px"><div>${I('sl','Stop Loss','0.00')}${I('riskpct','Risk Percentage','1.0')}${I('mentry','Multiple Entry','1.0850, 1.0840','text')}${I('htf','Higher Time Frame Analysis','','text')}${I('lm','Liquidity Model','','text')}${I('conf2','Confirmation','','text')}</div><div>${I('tp','Take Profit','0.00')}${I('possize','Position Size','')}${I('mexit','Multiple Exit','1.0900, 1.0920','text')}${I('ms','Market Structure','','text')}${I('em','Entry Model','','text')}</div></div>${dz('pre','Pre-Trade Screenshot')}${dz('post','Post-Trade Screenshot')}<div class="f"><label>Detailed Trade Review</label><textarea rows="4" oninput="S.form.review=this.value">${esc(f.review)}</textarea></div>`:''}
+<div class="f"><label>Screenshot</label></div>
 <div class="f"><label>Notes</label><textarea rows="3" oninput="S.form.notes=this.value">${esc(f.notes)}</textarea></div><div class="row"><button class="btn y" onclick="saveTrade()">${S.edit?'Update Trade':'Save Trade'}</button><button class="btn sec" onclick="S.edit=null;S.form=nf();S.tags=[];go('journal')">Cancel</button></div></div>`},
-strategies(){const g=groups();if(!g.length)return empty('Strategi muncul otomatis dari data Journal.');
-if(S.strat){const s=g.find(x=>x.n==S.strat);if(!s){S.strat=null;return V.strategies()}
-return`<button class="ib" onclick="S.strat=null;render()" style="margin-bottom:14px">← Semua strategi</button><div class="row sp" style="margin-bottom:14px"><h2 style="margin:0;letter-spacing:-.02em">${esc(s.n)}</h2><div class="row">${s.cf.map(c=>`<span class="tag sug">${c}</span>`).join('')}</div></div><div class="grid g4">${card('Trades',s.s.n)}${card('Win Rate',s.s.wr+'%')}${card('Net P&L',fm(s.s.tot),cls(s.s.tot))}${card('Avg RR',s.s.rr)}</div><div class="card" style="margin:14px 0"><div class="lab" style="margin-bottom:8px">Rules / Catatan strategi</div><textarea style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px;outline:0" rows="3" placeholder="Tulis aturan entry, risk, dan konfirmasi…" oninput="S.rules[S.strat]=this.value;save()">${esc(S.rules[s.n])}</textarea></div><div class="lab" style="margin-bottom:10px">Screenshot trade (klik untuk perbesar)</div><div class="gal">${s.a.map(x=>`<div class="gi" onclick="${x.shot?`lbT(${x.id})`:`detail(${x.id})`}">${x.shot?`<img src="${x.shot}">`:'<div class="no">No screenshot</div>'}<div><span>${x.sym} · ${x.date.slice(5)}</span><b class="${cls(x.pnl)}">${fm(x.pnl)}</b></div></div>`).join('')}</div>`}
-return`<p class="sm" style="margin:0 0 14px">Strategi dibuat otomatis dari kolom Strategy di Journal. Klik kartu untuk melihat screenshot tiap trade.</p><div class="grid ge">${g.map((s,i)=>`<div class="card" style="cursor:pointer" onclick="S.strat=groups()[${i}].n;render()"><div class="row sp"><b style="font-size:15px">${esc(s.n)}</b><b class="${cls(s.s.tot)}">${fm(s.s.tot)}</b></div><div class="row" style="margin:12px 0;gap:22px"><div><div class="lab">Trades</div><b>${s.s.n}</b></div><div><div class="lab">Win Rate</div><b>${s.s.wr}%</b></div><div><div class="lab">Avg RR</div><b>${s.s.rr}</b></div></div><div class="bar"><i style="width:${s.s.wr}%;background:var(--gn)"></i></div><div class="tags">${s.cf.map(c=>`<span class="tag sug">${c}</span>`).join('')}</div><div class="sm" style="margin-top:12px">Lihat screenshot →</div></div>`).join('')}</div>`},
 notes(){const n=S.notes.map((x,i)=>({...x,i})).sort((a,b)=>b.pin-a.pin);return`<div class="row tb" style="margin-bottom:14px"><input id="nn" style="flex:1" placeholder="Tulis catatan baru…"><button class="btn" onclick="if($('#nn').value){S.notes.push({t:$('#nn').value,pin:0});render();toast(L('Catatan ditambahkan','Note added'))}">Add Note</button></div><div class="grid">${n.map(x=>`<div class="card note ${x.pin?'pin':''}"><div class="row sp"><span>${x.pin?'📌 ':''}${esc(x.t)}</span><span class="row"><button class="ib" onclick="S.notes[${x.i}].pin^=1;render()">${x.pin?'Unpin':'Pin'}</button><button class="ib" onclick="S.notes.splice(${x.i},1);render()">Delete</button></span></div></div>`).join('')}</div>`},
 calendar(){const[Y,M]=S.cm,d={};T().forEach(x=>{(d[x.date]=d[x.date]||[]).push(x)});
 const first=new Date(Y,M,1).getDay(),dim=new Date(Y,M+1,0).getDate();let cells='',ws=0,wd=0,wn=1,mt=0,md=0,wins=0,c=0;
@@ -117,6 +111,7 @@ return`<div class="grid ge"><div class="card"><b>${L('Profil','Profile')}</b><di
 <div class="card"><b>${L('Akun','Accounts')}</b>${Object.keys(ACC).map(a=>`<div class="row sp" style="padding:11px 0;border-bottom:1px solid var(--bd)"><span>${esc(a)} <span class="sm">${fa(ACC[a].bal)} · ${ACC[a].type} · DD ${fa(ACC[a].dd)} ${ACC[a].ddType=='trailing'?'Trailing':'Static'}${ACC[a].target?' · Target '+fa(ACC[a].target):''} · ${ACC[a].t.length} trade</span></span><button class="ib" data-a="${esc(a)}" onclick="accM(this.dataset.a)">Edit</button></div>`).join('')}<button class="btn sec" style="margin-top:14px" onclick="accM()">${L('+ Tambah Akun','+ Add Account')}</button></div>
 <div class="card"><b>${L('Ekspor / Impor','Export / Import')}</b><div class="row" style="margin:14px 0"><button class="btn sec" onclick="expA(0)">${L('Ekspor Akun','Export Account')}</button><button class="btn sec" onclick="expA(1)">${L('Ekspor Semua','Export All')}</button><button class="btn sec" onclick="$('#imp').click()">${L('Impor JSON','Import JSON')}</button></div><b class="rd">Reset Data</b><p class="sm">${L('Hanya menghapus trade akun','Only deletes trades from account')} ${esc(S.acc)}.</p><button class="btn dg" onclick="resetM()">Reset ${esc(S.acc)}</button></div></div>
 <div class="svb" id="sv">${svBar()}</div>`}};
+
 function jtab(){const q=S.q.toLowerCase();let t=T().filter(x=>(x.sym+x.sess+x.dir+(x.strat||'')).toLowerCase().includes(q)&&(S.res=='all'||(S.res=='w')==(x.pnl>0))&&(S.ses=='all'||x.sess==S.ses));const[k,d]=S.sort;t.sort((a,b)=>(a[k]>b[k]?1:-1)*d);const ps=8,n=t.length,pg=Math.min(S.pg,Math.max(0,Math.ceil(n/ps)-1));
 const th=(l,k2)=>`<th onclick="S.sort=['${k2}',S.sort[0]=='${k2}'?-S.sort[1]:-1];$('#jt').innerHTML=jtab()">${l}${S.sort[0]==k2?(S.sort[1]>0?' ↑':' ↓'):''}</th>`;
 if(!n)return'<div class="empty">Tidak ada trade yang cocok.</div>';
@@ -124,14 +119,9 @@ return`<table><thead><tr>${th('Date','date')}${th('Symbol','sym')}<th>Dir</th>${
 function render(){save();$('#view').innerHTML=V[S.page]();$('#ttl').textContent=NAV.find(n=>n[0]==S.page)[1];$('#nav').innerHTML=NAV.map(n=>`<button class="${n[0]=='add'?'add':n[0]==S.page?'on':''}" onclick="${n[0]=='add'?'newTrade()':`go('${n[0]}')`}">${ic(n[0])}<span class="lb">${n[1]}</span></button>`).join('');if(S.page=='add')drawTags()}
 function go(p){if(p=='settings'&&(S.page!='settings'||!S.pf)){pfNew();S.cd=false}S.page=p;if(p!='strategies')S.strat=null;$('#sb').classList.remove('open');render();$('#view').scrollTop=0}
 function newTrade(){if(S.page!='add'||S.edit){S.edit=null;S.form=nf();S.tags=[]}go('add')}
-function drawTags(){$('#tags').innerHTML=S.tags.map((x,i)=>`<span class="tag">${esc(x)}<b onclick="S.tags.splice(${i},1);drawTags()">✕</b></span>`).join('')}
+function drawTags(){const e=$('#tags');if(e)e.innerHTML=S.tags.map((x,i)=>`<span class="tag">${esc(x)}<b onclick="S.tags.splice(${i},1);drawTags()">✕</b></span>`).join('')}
 function addTag(v){v=v.trim();if(v&&!S.tags.includes(v))S.tags.push(v);drawTags()}
-/* Screenshot dikompres (maks 1280px, JPEG) supaya localStorage tidak cepat penuh */
-function setShot(k,f){if(!f||!f.type.startsWith('image/'))return toast('File harus berupa gambar');const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const s=Math.min(1,1280/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);S.form[k]=c.toDataURL('image/jpeg',.82);render()};im.onerror=()=>toast('Gambar tidak bisa dibaca');im.src=r.result};r.readAsDataURL(f)}
 document.addEventListener('paste',e=>{if(S.page!='add')return;const it=[...(e.clipboardData?e.clipboardData.items:[])].find(i=>i.type.startsWith('image'));if(it){setShot(S.zone||'shot',it.getAsFile())}});
-function saveTrade(){const f=S.form;if(!f.sym)return toast('Isi Symbol dulu');const n=v=>{const x=parseFloat(String(v||'').replace(',','.'));return isNaN(x)?0:x},t=T(),o={sym:f.sym.toUpperCase(),dir:f.dir,date:f.date||TODAY,entry:f.entry||'–',exit:f.exit||'–',sl:f.sl||'–',tp:f.tp||'–',pnl:n(f.pnl),rr:n(f.rr),lot:n(f.lot),sess:f.sess,emo:f.emo,conf:S.tags.slice(),strat:f.strat||'Unassigned',note:f.notes||'',shot:f.shot||f.post||f.pre||null};
-if(S.edit){Object.assign(t.find(x=>x.id==S.edit),o)}else t.push({id:Math.max(0,...t.map(x=>x.id))+1,...o});S.cm=[+o.date.slice(0,4)||+TODAY.slice(0,4),(+o.date.slice(5,7)||+TODAY.slice(5,7))-1];S.sel=o.date;const was=S.edit;S.edit=null;S.form=nf();S.tags=[];toast(was?L('Trade diperbarui','Trade updated'):L('Trade ditambahkan','Trade added'));go('journal');setTimeout(notify,2400)}
-function editTrade(id){const x=T().find(y=>y.id==id);S.form={sym:x.sym,dir:x.dir,date:x.date,entry:x.entry,exit:x.exit,sl:x.sl,tp:x.tp,pnl:String(x.pnl),rr:String(x.rr),lot:String(x.lot),sess:x.sess,emo:x.emo,strat:x.strat,notes:x.note,shot:x.shot};S.tags=x.conf.slice();S.edit=id;closeM();go('add')}
 function del(id){ACC[S.acc].t=T().filter(x=>x.id!=id);closeM();render();toast('Trade dihapus')}
 function modal(h,w){$('#mb').className='mb'+(w?' w':'');$('#mb').innerHTML=h;$('#md').classList.add('on')}
 function closeM(){$('#md').classList.remove('on')}
@@ -139,7 +129,6 @@ $('#md').onclick=e=>{if(e.target.id=='md')closeM()};
 function lbT(id){const x=T().find(y=>y.id==id);if(!x||!x.shot)return;modal(`<div class="row sp" style="margin-bottom:12px"><b>${x.sym} · ${x.date}</b><button class="ib" onclick="closeM()">✕</button></div><img src="${x.shot}" style="width:100%;border-radius:10px;display:block"><div class="row sp" style="margin-top:14px"><b class="${cls(x.pnl)}">${fm(x.pnl)}</b><button class="btn sec" onclick="detail(${id})">Open trade</button></div>`,1)}
 function detail(id){const x=T().find(y=>y.id==id);modal(`<div class="row sp"><b style="font-size:18px">${x.sym} · ${x.dir}</b><button class="ib" onclick="closeM()">✕</button></div><div class="big ${cls(x.pnl)}">${fm(x.pnl)}</div><div class="grid ge" style="margin:16px 0">${[['Date',x.date],['Strategy',esc(x.strat)],['Entry',x.entry],['Exit',x.exit],['Stop Loss',x.sl],['Take Profit',x.tp],['RR',x.rr],['Lot Size',x.lot],['Session',x.sess],['Emotion',x.emo]].map(a=>`<div><div class="lab">${a[0]}</div>${a[1]}</div>`).join('')}</div><div class="tags" style="margin:0 0 14px">${x.conf.map(c=>`<span class="tag sug">${c}</span>`).join('')}</div>${x.note?`<p class="sm">${esc(x.note)}</p>`:''}${x.shot?`<img src="${x.shot}" style="width:100%;border-radius:10px;cursor:zoom-in;margin-bottom:14px" onclick="lbT(${id})">`:'<div class="card sm" style="text-align:center;margin-bottom:14px">No screenshot</div>'}<div class="row"><button class="btn" onclick="cert(${id})">Print Certificate</button><button class="btn sec" onclick="editTrade(${id})">Edit</button><button class="btn dg" onclick="del(${id})">Delete</button></div>`)}
 
-/* ---------- data sertifikat (dipakai tampilan & PNG) ---------- */
 function certInfo(id){const x=T().find(y=>y.id==id);if(!x)return null;
 const w=x.pnl>=0,a=ACC[S.acc],cc=S.country||'ID',
 k=w?{c:'#22dd00',p0:'#22dd00',p1:'#22dd00',ring:'#22dd00',glow:'rgba(34,221,0,.35)'}:{c:'#ff0000',p0:'#e24646',p1:'#c42a2a',ring:'#d82f2f',glow:'rgba(255,0,0,.3)'};
@@ -150,8 +139,6 @@ date:x.date.slice(5,7)+'/'+x.date.slice(8,10)+'/'+x.date.slice(0,4),
 user:(S.prof.user||S.prof.name||'USERNAME').toUpperCase(),
 country:cname.toUpperCase(),sym:x.sym,nm:NM[x.sym]||'',
 arrow:x.dir=='Buy'?'M7 17L17 7M9 7h8v8':'M7 7L17 17M17 9v8H9'}}
-
-/* ---------- tampilan sertifikat (modal) ---------- */
 function cert(id){const d=certInfo(id);if(!d)return;const{x,w,a,k}=d,
 P=(c,l,t,h)=>`<div class="a ${c}" style="left:${l}cqw;top:${t}cqw">${h}</div>`,
 D=(l,t,h)=>`<i class="a cd" style="left:${l}cqw;top:${t}cqw;height:${h}cqw"></i>`,
@@ -175,8 +162,6 @@ ${P('bv cx',21.7,87.95,esc(d.date))}${UL(11.35)}${P('lb2 cx',21.7,92.7,'DATE')}
 ${P('sg',44.3,85.2,`<img src="tandatangan.png" alt="" onerror="this.parentNode.classList.add('nf');this.remove()"><span class="sgf">M. Zufron</span>`)}${P('lb2 cx',50,92.7,'CEO · M. ZUFRON')}
 ${P('bv cx',79.15,87.95,fa(a.bal))}${UL(68.8)}${P('lb2 cx',79.15,92.7,'ACCOUNT SIZE')}</div>
 <div class="row" style="margin-top:14px"><button class="btn" onclick="dlCert(${id})">Download PNG</button><button class="btn sec" onclick="window.print()">Print</button><button class="btn sec" onclick="closeM()">Close</button></div>`,1)}
-
-/* ---------- download PNG (digambar di canvas 1254x1254) ---------- */
 async function dlCert(id){
 const d=certInfo(id);if(!d)return;const{x,w,a,k}=d,FF='Poppins,Inter,system-ui,sans-serif',SZ=1254,U=SZ/100;
 toast('Menyiapkan sertifikat…');
@@ -193,7 +178,6 @@ const rr=(l,t,W,H,r)=>{g.beginPath();g.moveTo(l+r,t);g.arcTo(l+W,t,l+W,t+H,r);g.
 const rg=(cx,cy,r,a0)=>{const q=g.createRadialGradient(cx,cy,0,cx,cy,r);q.addColorStop(0,rgba(b,a0));q.addColorStop(1,rgba(b,0));return q};
 const lgd=(y0,y1,a0)=>{const q=g.createLinearGradient(0,y0,0,y1);q.addColorStop(0,rgba(b,a0));q.addColorStop(.75,rgba(b,0));q.addColorStop(1,rgba(b,0));return q};
 const poly=pts=>{g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath()};
-/* background (selalu hijau) */
 g.fillStyle='#04090a';g.fillRect(0,0,SZ,SZ);
 g.fillStyle=rg(1254,0,600,.7);poly([[1225,0],[1254,0],[1254,700],[602,700]]);g.fill();
 g.fillStyle=lgd(400,1100,.28);poly([[1122,400],[1254,555],[1254,1254],[800,1254],[800,773]]);g.fill();
@@ -201,22 +185,17 @@ g.fillStyle=lgd(553,1150,.16);poly([[1122,553],[1254,705],[1254,1254],[800,1254]
 g.fillStyle=rg(1254,1254,460,.3);g.fillRect(0,0,SZ,SZ);
 g.lineWidth=1.5;g.strokeStyle=rgba('#19f0a0',.2);g.beginPath();g.moveTo(800,773);g.lineTo(1122,400);g.lineTo(1254,555);g.stroke();
 g.strokeStyle=rgba('#19f0a0',.08);g.beginPath();g.moveTo(850,870);g.lineTo(1122,553);g.lineTo(1254,705);g.stroke();
-/* logo */
 if(lg){g.save();g.beginPath();g.rect(9*U,10.5*U,13*U,8.78*U);g.clip();g.globalCompositeOperation='screen';g.drawImage(lg,(9-6.48)*U,(10.5-7.92)*U,25.79*U,lg.naturalHeight/lg.naturalWidth*25.79*U);g.restore()}
-/* garis pemisah */
 const LN='rgba(255,255,255,.22)',vd=(l,t,h)=>{g.fillStyle=LN;g.fillRect(l*U,t*U,2,h*U)};
 vd(24.96,11,8);vd(34.07,55.2,11.1);vd(62.8,55.2,11.1);
 g.fillStyle=LN;g.fillRect(8.9*U,71.8*U,82.1*U,2);
-/* header */
 tx('ROAD TO JOURNAL',28.55,12.5,2.1,500,'#fff',.3);
 tx('TRADE  /  DISCIPLINE  /  GROW',28.55,16.1,1.4,500,'#98a3a6',.24);
 tx('CERTIFICATE NO.',73.5,10.4,1.36,500,'#98a3a6',.14);tx(d.no,73.5,12.9,1.95,500,'#fff');
-/* hasil */
 tx('TRADE RESULT',8.6,26.7,2.1,500,'#98a3a6',.2);
 tx(fm2(x.pnl),8.8,31.7,9.9,700,k.c,-.025);
 {const gr=g.createLinearGradient(0,46.15*U,0,50.1*U);gr.addColorStop(0,k.p0);gr.addColorStop(1,k.p1);g.fillStyle=gr;rr(8.6*U,46.15*U,16.3*U,3.95*U,3.95*U/2);g.fill();
 tx(w?'PROFIT':'LOSS',8.6+8.15+.25*1.9/2,46.15+(3.95-1.9)/2,1.9,700,'#0a0a0a',.25,'c')}
-/* instrument / direction / entry-exit */
 tx('INSTRUMENT',8.9,55.4,1.42,500,'#98a3a6',.18);tx(d.sym,8.9,59,3.5,600,'#fff');tx(d.nm,8.9,64.3,1.8,400,'#8d989b');
 tx('DIRECTION',39.1,55.4,1.42,500,'#98a3a6',.18);
 {const l=38.9*U,t=58.8*U,W=18.2*U,H=5.3*U,bw=.26*U;g.strokeStyle=k.ring;g.lineWidth=bw;rr(l+bw/2,t+bw/2,W-bw,H-bw,H/2);g.stroke();
@@ -225,7 +204,6 @@ g.save();g.translate(sx,t+(H-ic)/2);g.scale(ic/24,ic/24);g.strokeStyle=k.c;g.lin
 tx(txt,(sx+ic+gap)/U,58.8+(5.3-2.2)/2,2.2,700,k.c,.18)}
 tx('ENTRY',67.7,55.25,1.42,500,'#98a3a6',.18);tx(String(x.entry),67.7,57.4,2.5,600,'#fff');
 tx('EXIT',67.7,61.3,1.42,500,'#98a3a6',.18);tx(String(x.exit),67.7,63.4,2.5,600,'#fff');
-/* presented to */
 tx('PROUDLY PRESENTED TO:',50,74.3,2,400,'#aab3b6',.12,'c');
 {const us=2.45,cs=1.7,fd=3.6,uw=mw(d.user,us,700,.01)/U,cw2=mw(d.country,cs,400,.1)/U,bw2=uw+2+.08+2+fd+2+cw2+5.9,bl=50-bw2/2,bt=77.6,bh=5.3;
 g.save();g.shadowColor=k.glow;g.shadowBlur=2.2*U;g.fillStyle='rgba(0,0,0,.35)';rr(bl*U,bt*U,bw2*U,bh*U,1.4*U);g.fill();g.restore();
@@ -235,7 +213,6 @@ g.fillStyle='rgba(255,255,255,.25)';g.fillRect(cx*U,(bt+(bh-2.3)/2)*U,2,2.3*U);c
 const fy=bt+(bh-fd)/2;g.save();g.beginPath();g.arc((cx+fd/2)*U,(fy+fd/2)*U,fd/2*U,0,7);g.clip();
 if(flag){const s=Math.max(fd*U/flag.width,fd*U/flag.height),fw=flag.width*s,fh=flag.height*s;g.drawImage(flag,(cx+fd/2)*U-fw/2,(fy+fd/2)*U-fh/2,fw,fh)}else{g.fillStyle='#333';g.fillRect(cx*U,fy*U,fd*U,fd*U)}
 g.restore();cx+=fd+2;tx(d.country,cx,bt+(bh-cs)/2,cs,400,'#aab3b6',.1)}
-/* footer */
 const col=(cx,v,lb)=>{tx(v,cx,87.95,2.7,600,'#fff',0,'c');g.fillStyle='rgba(255,255,255,.25)';g.fillRect((cx-10.35)*U,91.7*U,20.7*U,2);tx(lb,cx,92.7,1.6,500,'#98a3a6',.14,'c')};
 col(21.7,d.date,'DATE');col(79.15,fa(a.bal),'ACCOUNT SIZE');
 if(sg){g.save();g.globalCompositeOperation='screen';g.drawImage(sg,sg.width*100/791,sg.height*110/550,sg.width*580/791,sg.height*315/550,44.3*U,85.2*U,11.4*U,6.2*U);g.restore()}else tx('M. Zufron',50,85.5,5,400,'#fff',0,'c','Caveat,cursive');
@@ -246,34 +223,28 @@ let blob,noLogo=false;
 try{blob=await out(draw(logo,sig))}catch(e){noLogo=true;try{blob=await out(draw(null,null))}catch(e2){return toast('Gagal membuat gambar sertifikat')}}
 const u=URL.createObjectURL(blob),el=document.createElement('a');el.href=u;el.download='RTJ-certificate-'+x.sym+'-'+x.date+'.png';document.body.appendChild(el);el.click();el.remove();setTimeout(()=>URL.revokeObjectURL(u),2e3);
 toast(noLogo?'Sertifikat diunduh (tanpa logo: buka lewat hosting/server agar logo ikut)':'Sertifikat diunduh')}
-
 function resetM(){modal(`<b style="font-size:17px">Reset data ${esc(S.acc)}?</b><p class="sm">Hanya trade akun ini yang dihapus. Akun lain aman.</p><div class="row"><button class="btn dg" onclick="ACC[S.acc].t=[];closeM();render();toast('Data akun direset')">Ya, reset</button><button class="btn sec" onclick="closeM()">Batal</button></div>`)}
-/* ---------- accounts (editable) ---------- */
 function accSel(){$('#accSel').innerHTML=Object.keys(ACC).map(a=>`<option value="${esc(a)}" ${a==S.acc?'selected':''}>${esc(a)}</option>`).join('')}
 function accM(n){const a=n?ACC[n]:{bal:10000,dd:1000,type:'Personal Account',ddType:'static',target:0},dt=a.ddType||'static';modal(`<div class="row sp" style="margin-bottom:14px"><b style="font-size:17px">${n?'Edit':'Tambah'} Akun</b><button class="ib" onclick="closeM()">✕</button></div><div class="f"><label>Nama Akun</label><input id="an" value="${esc(n||'')}" placeholder="mis. Apex 50K"></div><div class="grid ge"><div class="f"><label>Balance Awal</label><input id="ab" inputmode="decimal" value="${a.bal}"></div><div class="f"><label>Max Drawdown (limit)</label><input id="ad" inputmode="decimal" value="${a.dd}"></div></div><div class="grid ge"><div class="f"><label>Tipe Drawdown</label><select id="adt"><option value="static" ${dt=='static'?'selected':''}>Static (tetap dari balance awal)</option><option value="trailing" ${dt=='trailing'?'selected':''}>Trailing (ikut equity tertinggi)</option></select></div><div class="f"><label>Target Profit</label><input id="atg" inputmode="decimal" value="${a.target||0}" placeholder="0 = tanpa target"></div></div><div class="f"><label>Tipe Akun</label><select id="at">${TYPES.map(t=>`<option ${t==a.type?'selected':''}>${t}</option>`).join('')}</select></div><div class="row"><button class="btn y" data-o="${esc(n||'')}" onclick="saveAcc(this.dataset.o)">Simpan</button>${n?`<button class="btn dg" data-o="${esc(n)}" onclick="delAcc(this.dataset.o)">Hapus Akun</button>`:''}<button class="btn sec" onclick="closeM()">Batal</button></div>`)}
 function saveAcc(o){const nm=$('#an').value.trim(),b=parseFloat($('#ab').value),dd=parseFloat($('#ad').value),ty=$('#at').value,ddt=$('#adt').value,tg=parseFloat($('#atg').value)||0;if(!nm)return toast('Nama akun wajib diisi');if(isNaN(b)||b<0||isNaN(dd)||dd<0||tg<0)return toast('Balance, drawdown, dan target harus angka');if(nm!=o&&ACC[nm])return toast('Nama akun sudah dipakai');
 if(o){const a=ACC[o];a.bal=b;a.dd=dd;a.type=ty;a.ddType=ddt;a.target=tg;if(nm!=o){const n2={};Object.keys(ACC).forEach(k=>n2[k==o?nm:k]=ACC[k]);Object.keys(ACC).forEach(k=>delete ACC[k]);Object.assign(ACC,n2);if(S.acc==o)S.acc=nm}}else{ACC[nm]={bal:b,dd,type:ty,ddType:ddt,target:tg,t:[]};S.acc=nm}
 closeM();accSel();render();toast('Akun disimpan');setTimeout(notify,2400)}
 function delAcc(n){if(Object.keys(ACC).length<2)return toast('Minimal harus ada 1 akun');if(!confirm(L('Hapus akun "'+n+'" beserta semua trade-nya?','Delete account "'+n+'" and all its trades?')))return;delete ACC[n];if(S.acc==n)S.acc=Object.keys(ACC)[0];S.strat=null;S.pg=0;closeM();accSel();render();toast('Akun dihapus')}
-/* ---------- export / import ---------- */
 function dl(name,o){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o)],{type:'application/json'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1e3)}
 function expA(all){dl(all?'rtj-all.json':'rtj-'+S.acc.replace(/\W+/g,'_')+'.json',all?{acc:ACC,notes:S.notes,news:S.news,rules:S.rules}:{name:S.acc,data:ACC[S.acc]});toast('File diexport')}
 function rd(f,cb){if(!f)return;const r=new FileReader();r.onload=()=>{try{cb(JSON.parse(r.result))}catch(e){toast('File JSON tidak valid')}};r.readAsText(f)}
 $('#imp').onchange=e=>{rd(e.target.files[0],j=>{if(j.acc){Object.assign(ACC,j.acc);if(j.notes)S.notes=j.notes;if(j.news)Object.assign(S.news,j.news);if(j.rules)Object.assign(S.rules,j.rules)}else if(j.name&&j.data)ACC[j.name]=j.data;else return toast('Format tidak dikenali');accSel();render();toast('Import berhasil')});e.target.value=''};
 $('#impn').onchange=e=>{rd(e.target.files[0],j=>{if(!Array.isArray(j))return toast('Format: array [{date,time,cur,event,impact,actual,forecast,previous}]');j.forEach(n=>{if(!n.date||!(n.event||n.ev))return;(S.news[n.date]=S.news[n.date]||[]).push({time:n.time||'',cur:n.cur||n.currency||'',ev:n.event||n.ev,imp:['High','Medium','Low'].includes(n.impact)?n.impact:'Low',act:n.actual||'',fc:n.forecast||'',pv:n.previous||''})});render();toast('News diimport')});e.target.value=''};
-/* ---------- notifikasi kecil di pojok kanan bawah ---------- */
 function toast(m,k){const box=$('#ts'),e=document.createElement('div'),sp=document.createElement('span'),bad=k=='err'||/^(Isi |Gagal|Nama akun|Balance|File |Format|Minimal|Gambar|Penyimpanan)/.test(m);e.className='tt'+(bad?' er':'');sp.textContent=m;e.appendChild(sp);box.appendChild(e);while(box.children.length>3)box.firstChild.remove();requestAnimationFrame(()=>e.classList.add('on'));setTimeout(()=>{e.classList.remove('on');setTimeout(()=>e.remove(),260)},m.length>80?4500:2200)}
 function theme(m){document.documentElement.dataset.theme=m;S.theme=m;if(S.pf)S.pf.theme=m;save()}
 $('#th').onclick=()=>{theme(document.documentElement.dataset.theme=='dark'?'light':'dark');if(S.page=='settings')render()};
 $('#col').onclick=()=>$('#sb').classList.toggle('mini');
 $('#menu').onclick=()=>$('#sb').classList.toggle('open');
 $('#accSel').onchange=e=>{S.acc=e.target.value;S.sel=TODAY;S.strat=null;S.pg=0;render();toast('Akun: '+S.acc)};
-/* minta browser agar data tidak dihapus otomatis saat storage menipis */
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
-/* ---------- pengaturan: draft + tombol Simpan, negara & bendera ---------- */
+
 const CC='AD AE AF AG AI AL AM AO AR AT AU AZ BA BB BD BE BF BG BH BI BJ BN BO BR BS BT BW BY BZ CA CD CF CG CH CI CL CM CN CO CR CU CV CY CZ DE DJ DK DM DO DZ EC EE EG ER ES ET FI FJ FR GA GB GD GE GH GM GN GQ GR GT GW GY HK HN HR HT HU ID IE IL IN IQ IR IS IT JM JO JP KE KG KH KI KM KN KP KR KW KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MG MK ML MM MN MO MR MT MU MV MW MX MY MZ NA NE NG NI NL NO NP NR NZ OM PA PE PG PH PK PL PS PT PW PY QA RO RS RU RW SA SB SC SD SE SG SI SK SL SM SN SO SR SS ST SV SY SZ TD TG TH TJ TL TM TN TO TR TT TV TW TZ UA UG US UY UZ VA VC VE VN VU WS YE ZA ZM ZW'.split(' ');
 const DN={},cn=c=>{try{return(DN[S.lang]=DN[S.lang]||new Intl.DisplayNames([S.lang],{type:'region'})).of(c)||c}catch(e){return c}};
-/* Bendera pakai gambar (flagcdn.com) karena emoji bendera tidak tampil di Windows */
 const fl=c=>`<img class="fl" src="https://flagcdn.com/h20/${c.toLowerCase()}.png" srcset="https://flagcdn.com/h40/${c.toLowerCase()}.png 2x" alt="${c}" loading="lazy" onerror="this.style.display='none'">`;
 function pfNew(){S.pf={cur:S.cur,theme:S.theme,lang:S.lang,country:S.country,name:S.prof.name||'',user:S.prof.user||''}}
 function pfSet(k,v){S.pf[k]=v;if(k=='country')S.cd=false;render()}
@@ -285,11 +256,6 @@ function cdTog(){S.cd=!S.cd;S.cq='';render();if(S.cd){const q=$('.csq');q&&q.foc
 function cdList(){const q=S.cq.trim().toLowerCase(),a=CC.map(c=>[c,cn(c)]).filter(x=>!q||x[1].toLowerCase().includes(q)||x[0].toLowerCase()==q).sort((x,y)=>x[1].localeCompare(y[1],S.lang));return a.length?a.map(x=>`<button type="button" class="cso ${x[0]==S.pf.country?'on':''}" onclick="pfSet('country','${x[0]}')">${fl(x[0])}<span>${esc(x[1])}</span></button>`).join(''):`<div class="sm" style="padding:8px">${L('Negara tidak ditemukan','No country found')}</div>`}
 function cdq(){const l=$('#cdl');if(l)l.innerHTML=cdList()}
 document.addEventListener('click',e=>{if(S.cd&&!e.target.closest('.cs')){S.cd=false;if(S.page=='settings')render()}});
-/* ---------- bahasa Indonesia / English ----------
-   Teks di kode ditulis apa adanya (campuran). Mesin ini menerjemahkan teks di layar sesuai pilihan bahasa:
-   EXD = terjemahan teks utuh [teks asli, Indonesia, English]  (0 = tidak berubah)
-   SBD = terjemahan potongan kalimat yang bercampur dengan angka/nama
-   Istilah trading (Win Rate, Profit Factor, Drawdown, Equity, RR, Lot, Stop Loss, Take Profit) sengaja tetap Inggris. */
 const EXD=[
 ['Analytics','Analitik',0],['Journal','Jurnal',0],['Add Trade','Tambah Trade',0],['Strategies','Strategi',0],['Notes','Catatan',0],['P&L Calendar','Kalender P&L',0],['Settings','Pengaturan',0],
 ['Account','Akun',0],['Accounts','Akun',0],['Collapse','Ciutkan',0],['+ Add Trade','+ Tambah Trade',0],['Toggle theme','Ganti tema',0],['Hari ini',0,'Today'],
@@ -302,17 +268,14 @@ const EXD=[
 ['Basic Mode','Mode Dasar',0],['Pro Mode','Mode Pro',0],['Trading Pair / Symbol','Pair Trading / Simbol',0],['Date (YYYY-MM-DD)','Tanggal (YYYY-MM-DD)',0],['Entry Price','Harga Entry',0],['Exit Price','Harga Exit',0],['Lot Size','Ukuran Lot',0],
 ['Strategy (otomatis masuk ke menu Strategies)','Strategi (otomatis masuk ke menu Strategi)','Strategy (automatically added to the Strategies menu)'],
 ['Trading Session','Sesi Trading',0],['Emotion','Emosi',0],['Confluence (ketik lalu Enter)','Konfluensi (ketik lalu Enter)','Confluence (type, then press Enter)'],['Remove','Hapus',0],
-['Drag a screenshot here, click to upload, or paste with Ctrl/Cmd+V','Seret screenshot ke sini, klik untuk unggah, atau tempel dengan Ctrl/Cmd+V',0],
-['Risk Percentage','Persentase Risiko',0],['Multiple Entry','Entry Ganda',0],['Higher Time Frame Analysis','Analisis Time Frame Lebih Tinggi',0],['Liquidity Model','Model Likuiditas',0],['Confirmation','Konfirmasi',0],['Position Size','Ukuran Posisi',0],['Multiple Exit','Exit Ganda',0],['Market Structure','Struktur Pasar',0],['Entry Model','Model Entry',0],['Pre-Trade Screenshot','Screenshot Sebelum Trade',0],['Post-Trade Screenshot','Screenshot Sesudah Trade',0],['Detailed Trade Review','Ulasan Trade Detail',0],['Save Trade','Simpan Trade',0],['Update Trade','Perbarui Trade',0],['Cancel','Batal',0],
+['Save Trade','Simpan Trade',0],['Update Trade','Perbarui Trade',0],['Cancel','Batal',0],
 ['mis. 1515 atau -200',0,'e.g. 1515 or -200'],['mis. 2.4',0,'e.g. 2.4'],['mis. London Sweep + FVG',0,'e.g. London Sweep + FVG'],['mis. FVG, SMT, Order Block',0,'e.g. FVG, SMT, Order Block'],
-['Strategi dibuat otomatis dari kolom Strategy di Journal. Klik kartu untuk melihat screenshot tiap trade.',0,"Strategies are created automatically from the Strategy column in your Journal. Click a card to view each trade's screenshots."],
-['← Semua strategi',0,'← All strategies'],['Trades','Trade',0],['Net P&L','P&L Bersih',0],['Avg RR','Rata-rata RR',0],['Rules / Catatan strategi',0,'Rules / Strategy notes'],['Tulis aturan entry, risk, dan konfirmasi…',0,'Write your entry, risk, and confirmation rules…'],['Screenshot trade (klik untuk perbesar)',0,'Trade screenshots (click to enlarge)'],['No screenshot','Tanpa screenshot',0],['Lihat screenshot →',0,'View screenshots →'],
+['← Semua strategi',0,'← All strategies'],['Trades','Trade',0],['Net P&L','P&L Bersih',0],['Avg RR','Rata-rata RR',0],['No screenshot','Tanpa screenshot',0],
 ['Tulis catatan baru…',0,'Write a new note…'],['Add Note','Tambah Catatan',0],['Pin','Sematkan',0],['Unpin','Lepas',0],
 ['Trading Days','Hari Trading',0],['Winning Days','Hari Profit',0],['Weekly P&L (terbaru)','P&L Mingguan (terbaru)','Weekly P&L (latest)'],['Tidak ada trade di tanggal ini.',0,'No trades on this date.'],['Economic News','Berita Ekonomi',0],['Belum ada news di tanggal ini.',0,'No news on this date yet.'],['Jam 19:30',0,'Time 19:30'],['Event, mis. Non-Farm Payrolls',0,'Event, e.g. Non-Farm Payrolls'],['Actual','Aktual',0],['Forecast','Perkiraan',0],['Previous','Sebelumnya',0],['+ Tambah news',0,'+ Add news'],['Import JSON','Impor JSON',0],['Kalender Ekonomi · Myfxbook',0,'Economic Calendar · Myfxbook'],['Buka Myfxbook ↗',0,'Open Myfxbook ↗'],['Semua',0,'All'],['Medium+High','Sedang+Tinggi',0],['High','Tinggi',0],['Medium','Sedang',0],['Low','Rendah',0],
 ['Print Certificate','Cetak Sertifikat',0],['Open trade','Buka trade',0],['Download PNG','Unduh PNG',0],['Print','Cetak',0],['Close','Tutup',0],
 ['Edit Akun',0,'Edit Account'],['Tambah Akun',0,'Add Account'],['Nama Akun',0,'Account Name'],['Balance Awal',0,'Starting Balance'],['Tipe Drawdown',0,'Drawdown Type'],['Static (tetap dari balance awal)',0,'Static (fixed from starting balance)'],['Trailing (ikut equity tertinggi)',0,'Trailing (follows highest equity)'],['Tipe Akun',0,'Account Type'],['Simpan',0,'Save'],['Hapus Akun',0,'Delete Account'],['mis. Apex 50K',0,'e.g. Apex 50K'],['0 = tanpa target',0,'0 = no target'],
 ['Hanya trade akun ini yang dihapus. Akun lain aman.',0,"Only this account's trades are deleted. Other accounts are safe."],['Ya, reset',0,'Yes, reset'],['Batal',0,'Cancel'],
-/* notifikasi */
 ['Penyimpanan penuh, export data kamu',0,'Storage full, export your data'],['File harus berupa gambar',0,'File must be an image'],['Gambar tidak bisa dibaca',0,'Image could not be read'],['Isi nama event',0,'Enter an event name'],['News ditambahkan',0,'News added'],['Isi Symbol dulu',0,'Enter a symbol first'],['Trade dihapus',0,'Trade deleted'],['Menyiapkan sertifikat…',0,'Preparing certificate…'],['Gagal membuat gambar sertifikat',0,'Failed to create certificate image'],['Sertifikat diunduh (tanpa logo: buka lewat hosting/server agar logo ikut)',0,'Certificate downloaded (no logo: open via hosting/server to include the logo)'],['Sertifikat diunduh',0,'Certificate downloaded'],['Data akun direset',0,'Account data reset'],['Nama akun wajib diisi',0,'Account name is required'],['Balance, drawdown, dan target harus angka',0,'Balance, drawdown, and target must be numbers'],['Nama akun sudah dipakai',0,'Account name already in use'],['Akun disimpan',0,'Account saved'],['Minimal harus ada 1 akun',0,'At least 1 account is required'],['Akun dihapus',0,'Account deleted'],['File diexport',0,'File exported'],['File JSON tidak valid',0,'Invalid JSON file'],['Format tidak dikenali',0,'Unrecognized format'],['Import berhasil',0,'Import successful'],['News diimport',0,'News imported']
 ];
 const SBD=[
@@ -331,3 +294,75 @@ function walk(n){if(n.nodeType==3)return tn(n);if(n.nodeType!=1)return;if(n.clos
 function setLang(l){S.lang=l;document.documentElement.lang=l;walk(document.body)}
 function i18nStart(){document.documentElement.lang=S.lang;new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(walk))).observe(document.body,{childList:true,subtree:true});walk(document.body)}
 load();theme(S.theme);i18nStart();accSel();render();
+
+
+/* ===== addon.js (dimuat SETELAH kode di atas) ===== */
+(()=>{
+const CK=KEY+'_cust',
+D={ex:['Target hit','Stop loss','Break even','Time stop','Manual exit'],pb:['Reversal','Continuation','Retracement','Manipulation'],lq:['Liquidity sweep','Equal highs','Equal lows','Session liquidity','Major high','Major low'],cf:['FVG','Order block','Breaker','Equilibrium','Imbalance','Liquidity sweep'],cm:['iFVG','Market structure shift','Retest','Rejection'],bn:['SMT','CISD','Displacement'],ps:['Patient','Disciplined','Focused','Calm','Confident','Rule-Following','Selective','Prepared'],ng:['Fomo','Revenge','Overconfident','Impatient','Fearful','Greedy','Distracted','Frustrated','Anxious']};
+let C={};try{C=JSON.parse(localStorage.getItem(CK)||'{}')}catch(e){}
+const cu=k=>C[k]||(C[k]=[]),opts=k=>D[k].concat(cu(k)),svC=()=>{try{localStorage.setItem(CK,JSON.stringify(C))}catch(e){}},
+A=k=>S.form[k]||(S.form[k]=[]),IM=x=>x.imgs&&x.imgs.length?x.imgs:(x.shot?[x.shot]:[]);
+
+/* ---------- gambar (banyak) ---------- */
+const cmp=(f,cb)=>{if(!f||!f.type.startsWith('image/'))return toast('File harus berupa gambar');const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const s=Math.min(1,1100/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',.75))};im.onerror=()=>toast('Gambar tidak bisa dibaca');im.src=r.result};r.readAsDataURL(f)};
+window.setShot=(k,f)=>cmp(f,u=>{A('imgs').push(u);render()});
+window.addImgs=fl=>[...fl].forEach(f=>setShot(0,f));
+window.addLink=()=>{const v=$('#lk').value.trim();if(!/^https?:\/\//.test(v))return toast('Isi link gambar yang valid (https://…)');A('imgs').push(v);S.pt='up';render()};
+window.rmImg=i=>{A('imgs').splice(i,1);render()};
+window.lbI=src=>modal(`<div class="row sp" style="margin-bottom:12px"><span></span><button class="ib" onclick="closeM()">✕</button></div><img src="${esc(src)}" style="width:100%;border-radius:10px;display:block">`,1);
+const pics=()=>{const a=A('imgs'),lk=S.pt=='link';return`<div class="f"><label>Pictures</label><div class="seg" style="margin-bottom:10px"><button type="button" class="${lk?'':'on'}" onclick="S.pt='up';render()">Upload</button><button type="button" class="${lk?'on':''}" onclick="S.pt='link';render()">Paste a link</button></div>${lk?`<div class="row"><input id="lk" placeholder="https://…" style="flex:1;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px 12px;outline:0"><button type="button" class="btn" onclick="addLink()">Add</button></div>`:`<div class="drop" ondragover="event.preventDefault();this.classList.add('ov')" ondragleave="this.classList.remove('ov')" ondrop="event.preventDefault();addImgs(event.dataTransfer.files)" onclick="this.querySelector('input').click()">${ic('up')}<div>Drop screenshots, or <b>choose files</b> · Ctrl/Cmd+V</div><input type="file" accept="image/*" multiple hidden onchange="addImgs(this.files);this.value=''"></div>`}${a.length?`<div class="thm">${a.map((s,i)=>`<div><img src="${esc(s)}"><button type="button" class="ib" onclick="rmImg(${i})">✕</button></div>`).join('')}</div>`:''}</div>`};
+
+/* ---------- komponen form ---------- */
+window.pick=(k,v,m)=>{if(m){const a=A(k),i=a.indexOf(v);i<0?a.push(v):a.splice(i,1)}else S.form[k]=S.form[k]==v?'':v;render()};
+window.addC=(k,ck,m)=>{const v=$('#ad_'+k).value.trim();if(!v)return;if(!opts(ck).includes(v)){cu(ck).push(v);svC()}if(m){if(!A(k).includes(v))A(k).push(v)}else S.form[k]=v;render()};
+const cp=(k,v,on,m)=>`<button type="button" class="chip ${on?'on':''}" data-v="${esc(v)}" onclick="pick('${k}',this.dataset.v,${m})">${esc(v)}</button>`,
+chs=(k,ck,m)=>`<div class="chips">${opts(ck).map(v=>cp(k,v,m?A(k).includes(v):S.form[k]==v,m)).join('')}</div>`,
+addr=(k,ck,m,ph)=>`<div class="adr"><input id="ad_${k}" placeholder="${ph}" autocomplete="off" onkeydown="if(event.key=='Enter')addC('${k}','${ck}',${m})"><button type="button" class="ib" onclick="addC('${k}','${ck}',${m})">Add</button></div>`,
+I=(n,l,p,m='decimal',t='')=>`<div class="f"><label>${l}</label><input ${t} inputmode="${m}" autocomplete="off" placeholder="${p}" value="${esc(S.form[n])}" oninput="S.form.${n}=this.value"></div>`,
+sl=(k,o,l)=>`<div class="f"><label>${l}</label><select onchange="S.form.${k}=this.value">${o.map(v=>`<option ${(S.form[k]||o[0])==v?'selected':''}>${v}</option>`).join('')}</select></div>`,
+lst=(k,l)=>`${A(k).map((v,i)=>`<div class="adr"><input value="${esc(v)}" placeholder="price / size" oninput="S.form.${k}[${i}]=this.value"><button type="button" class="ib" onclick="S.form.${k}.splice(${i},1);render()">✕</button></div>`).join('')}<button type="button" class="chip add" style="margin-top:8px" onclick="S.form.${k}.push('');render()">+ ${l}</button>`,
+sec=(t,b,adv)=>`<div class="card" style="margin-top:14px"><div class="sct">${t}${adv?'<span class="adv">ADVANCED</span>':''}</div>${b}</div>`,
+tog=()=>`<div class="row sp" style="margin-bottom:14px"><div class="seg"><button class="${S.mode!='pro'?'on':''}" onclick="S.mode='basic';render()">Basic Mode</button><button class="${S.mode=='pro'?'on':''}" onclick="S.mode='pro';render()">Pro Mode</button></div><span class="sm">${S.edit?'Editing trade #'+S.edit:''}</span></div>`;
+
+const pro=()=>{const f=S.form;return tog()+
+sec('Trade Info',`${I('sym','Symbol','MNQ, SPY…','text')}${I('strat','Strategy (otomatis masuk ke menu Strategies)','mis. London Sweep + FVG','text','list="sl"')}<datalist id="sl">${groups().map(g=>`<option value="${esc(g.n)}">`).join('')}</datalist>${I('date','Date (YYYY-MM-DD)','','text')}<div class="grid ge">${sl('ac',['Futures','Forex','Indices','Stocks','Crypto','Commodities'],'Asset Class')}${sl('tt',['Scalp','Day Trade','Swing'],'Trade Type')}</div><div class="f"><label>Direction</label><div class="seg" style="display:flex">${[['Buy','↑ Long'],['Sell','↓ Short']].map(r=>`<button type="button" style="flex:1;justify-content:center" class="${f.dir==r[0]?'on':''}" onclick="S.form.dir='${r[0]}';render()">${r[1]}</button>`).join('')}</div></div><div class="f"><label>Session</label><div class="chips">${['Asia','London','NY AM','NY PM','No session'].map(v=>cp('sess',v,f.sess==v,0)).join('')}</div></div><div class="f"><label>Followed my plan</label><div class="chips">${['Yes','No'].map(v=>cp('plan',v,f.plan==v,0)).join('')}</div></div><div class="sm">Account: <b>${esc(S.acc)}</b> · <a href="#" onclick="accM(S.acc);return false">Manage</a></div>`)+
+sec('Execution',`<div class="grid ge">${I('entry','Entry Price','0.00')}${I('exit','Exit Price','0.00')}${I('pnl','P&L','+500 or -200')}${I('lot','Size / Qty','1')}${I('prr','Planned R:R','e.g. 2.0')}${I('rr','Realized R:R','e.g. 2.5')}${I('et','Entry Time','HH:MM:SS','text')}${I('xt','Exit / Close Time','HH:MM:SS','text')}${I('sl','Stop Loss','0.00')}${I('tp','Target','0.00')}</div><div class="grid ge"><div class="f"><label>Partials</label>${lst('par','Add partial')}</div><div class="f"><label>Add-ons</label>${lst('add','Add add-on')}</div></div><div class="grid ge">${I('mae','MAE (max adverse, optional)','Against you, in $')}${I('mfe','MFE (max favorable, optional)','In your favour, in $')}</div><div class="f"><label>Exit Reason</label>${chs('xr','ex',0)}${addr('xr','ex',0,'Add your own exit reason…')}</div>`)+
+sec('Playbook',chs('pb','pb',0)+addr('pb','pb',0,'Add your own playbook…'),1)+
+sec('Liquidity Target',`<p class="sm" style="margin:0 0 10px">What were you targeting? The magnet this trade was built to reach.</p>${chs('lq','lq',1)}${addr('lq','lq',1,'Add a target…')}`,1)+
+sec('Breakdown',[['Confluences','cf','#a855f7'],['Confirmations','cm','#3b82f6'],['Bonus','bn','#f59e0b']].map(r=>`<div class="bh" style="color:${r[2]}">${r[0].toUpperCase()}</div>${chs(r[1],r[1],1)}${addr(r[1],r[1],1,'+ Add')}`).join(''),1)+
+sec('Post-loss Entry',sl('pl',['No revenge trade','Revenge trade','Re-entry (planned)'],'Post-loss entry (revenge trade?)'),1)+
+sec('Emotions & Psychology',`<div class="bh">POSITIVE, WHAT KEPT YOU DISCIPLINED?</div>${chs('ps','ps',1)}${addr('ps','ps',1,'Add your own…')}<div class="bh" style="margin-top:18px">NEGATIVE, WHAT HURT THIS TRADE?</div>${chs('ng','ng',1)}${addr('ng','ng',1,'Add your own…')}`,1)+
+sec('Performance',`<div class="bh" style="margin-top:0">TRADE GRADE</div><div class="chips">${['A+','A','B','C','F'].map(v=>cp('gr',v,f.gr==v,0)).join('')}</div>`)+
+sec('Pictures',pics())+
+sec('Notes',`<textarea rows="5" style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px;outline:0" placeholder="Explain your trade, entry, and insights. What happened? What did you do well? What would you do differently?" oninput="S.form.notes=this.value">${esc(f.notes)}</textarea>`)+
+`<div class="row" style="margin-top:14px"><button class="btn y" style="flex:1" onclick="saveTrade()">${S.edit?'Update Trade':'Save Trade'}</button>${S.edit?'<button class="btn dg" onclick="del(S.edit);S.edit=null;S.form=nf();go(\'journal\')">Delete</button>':''}<button class="btn sec" onclick="S.edit=null;S.form=nf();S.tags=[];go('journal')">Cancel</button></div>`};
+
+const _add=V.add;
+V.add=()=>{if(S.mode=='pro')return pro();const h=_add(),i=h.indexOf('<div class="f"><label>Screenshot</label>'),j=h.indexOf('<div class="f"><label>Notes</label>');return i>0&&j>i?h.slice(0,i)+pics()+h.slice(j):h};
+
+/* ---------- simpan / edit ---------- */
+window.saveTrade=()=>{const f=S.form;if(!f.sym)return toast('Isi Symbol dulu');
+const n=v=>{const x=parseFloat(String(v||'').replace(',','.'));return isNaN(x)?0:x},t=T(),p=S.mode=='pro',im=A('imgs').slice(),cf=p?[...A('cf'),...A('cm'),...A('bn')]:[],
+o={sym:f.sym.toUpperCase(),dir:f.dir,date:f.date||TODAY,entry:f.entry||'–',exit:f.exit||'–',sl:f.sl||'–',tp:f.tp||'–',pnl:n(f.pnl),rr:n(f.rr),lot:n(f.lot),sess:f.sess,emo:p?(A('ng')[0]||A('ps')[0]||'Disciplined'):f.emo,conf:cf.length?cf:S.tags.slice(),strat:f.strat||'Unassigned',note:f.notes||'',imgs:im,shot:im[0]||null,f:{...f,imgs:undefined}};
+if(S.edit)Object.assign(t.find(x=>x.id==S.edit),o);else t.push({id:Math.max(0,...t.map(x=>x.id))+1,...o});
+S.cm=[+o.date.slice(0,4)||+TODAY.slice(0,4),(+o.date.slice(5,7)||+TODAY.slice(5,7))-1];S.sel=o.date;const was=S.edit;S.edit=null;S.form=nf();S.tags=[];toast(was?L('Trade diperbarui','Trade updated'):L('Trade ditambahkan','Trade added'));go('journal');setTimeout(notify,2400)};
+window.editTrade=id=>{const x=T().find(y=>y.id==id);S.form={sym:x.sym,dir:x.dir,date:x.date,entry:x.entry,exit:x.exit,sl:x.sl,tp:x.tp,pnl:String(x.pnl),rr:String(x.rr),lot:String(x.lot),sess:x.sess,emo:x.emo,strat:x.strat,notes:x.note,...(x.f||{}),imgs:IM(x).slice()};S.tags=x.conf.slice();S.edit=id;closeM();go('add')};
+const _d=window.detail;
+window.detail=id=>{_d(id);const x=T().find(y=>y.id==id),a=IM(x),f=x.f||{},mb=$('#mb'),tg=[f.pb,...(f.lq||[]),f.gr&&'Grade '+f.gr,f.plan&&'Plan: '+f.plan,f.tt,f.ac].filter(Boolean);
+if(!tg.length&&a.length<2)return;[...mb.children].pop().insertAdjacentHTML('beforebegin',`<div class="tags" style="margin:0 0 14px">${tg.map(c=>`<span class="tag sug">${esc(c)}</span>`).join('')}</div>${a.length>1?`<div class="thm" style="margin:0 0 14px">${a.slice(1).map(s=>`<img src="${esc(s)}" onclick="lbI(this.src)">`).join('')}</div>`:''}`)};
+
+/* ---------- halaman Strategies ---------- */
+const all=s=>s.a.flatMap(x=>IM(x).map(src=>({src,x}))),
+top=(a,k)=>{const m={};a.forEach(x=>m[x[k]]=(m[x[k]]||0)+1);return Object.entries(m).sort((p,q)=>q[1]-p[1])[0][0]},
+dS=s=>{const im=all(s),i=Math.min(S.si||0,Math.max(0,im.length-1)),c=im[i];
+return`<button class="ib" onclick="S.strat=null;render()" style="margin-bottom:14px">← Semua strategi</button><div class="eb">STRATEGY</div><h2 class="hx" style="font-size:clamp(28px,4vw,40px)">${esc(s.n)}</h2><div class="row" style="margin-bottom:14px">${s.cf.map(c=>`<span class="tag sug">${esc(c)}</span>`).join('')}</div>
+<div class="grid g4">${card('Trades',s.s.n)}${card('Win Rate',s.s.wr+'%')}${card('Net P&L',fm(s.s.tot),cls(s.s.tot))}${card('Avg RR',s.s.rr)}</div>
+<div class="grid g2" style="margin-top:14px"><div class="card">${c?`<img src="${esc(c.src)}" class="hero" onclick="lbI(this.src)"><div class="row sp"><span class="sm">${esc(c.x.sym)} · ${c.x.date}</span><b class="${cls(c.x.pnl)}">${fm(c.x.pnl)}</b></div><div class="thm">${im.map((m,k)=>`<img class="${k==i?'on':''}" src="${esc(m.src)}" onclick="S.si=${k};render()">`).join('')}</div>`:'<div class="empty">No screenshot</div>'}</div>
+<div class="card"><div class="lab" style="margin-bottom:8px">${L('Penjelasan / Rules strategi','Explanation / Strategy rules')}</div><textarea style="width:100%;background:var(--sf2);border:1px solid var(--bd);border-radius:10px;padding:11px;outline:0" rows="6" placeholder="Tulis aturan entry, risk, dan konfirmasi…" oninput="S.rules[S.strat]=this.value;save()">${esc(S.rules[s.n])}</textarea><div class="lab" style="margin:18px 0 6px">Trades</div>${s.a.slice().reverse().map(x=>`<div class="row sp" style="padding:9px 0;border-top:1px solid var(--bd);cursor:pointer" onclick="detail(${x.id})"><span>${esc(x.sym)} <span class="sm">${x.date.slice(5)} · ${x.dir}</span></span><b class="${cls(x.pnl)}">${fm(x.pnl)}</b></div>`).join('')}</div></div>`};
+V.strategies=()=>{const g=groups();if(!g.length)return empty('Strategi muncul otomatis dari data Journal.');
+if(S.strat){const s=g.find(x=>x.n==S.strat);if(s)return dS(s);S.strat=null}
+return`<div class="eb">STRATEGIES</div><h2 class="hx">${L('Setup favoritku.','My favorite setups.')}</h2><p class="sub">${L('Setup trading yang sering saya pakai. Klik kartu untuk melihat chart dan penjelasannya.','Trading setups I use often. Click a card to see the chart and its explanation.')}</p><div class="sg">${g.map((s,i)=>{const im=all(s),cv=im.length?im[im.length-1].src:'',d=top(s.a,'dir');
+return`<div class="sc2" onclick="S.strat=groups()[${i}].n;S.si=0;render()"><div class="simg">${cv?`<img src="${esc(cv)}" loading="lazy">`:'<div class="no">No screenshot</div>'}</div><div class="sbd"><h3>${esc(s.n)} · ${esc(top(s.a,'sym'))}</h3><div class="stgs"><span class="stg ${d=='Buy'?'buy':'sell'}">${d.toUpperCase()}</span><span class="stg">${esc(top(s.a,'sess'))}</span>${+s.s.rr?`<span class="stg">+${s.s.rr}R</span>`:''}</div><div class="sm" style="margin-top:12px">${s.s.n} trade · WR ${s.s.wr}% · <b class="${cls(s.s.tot)}">${fm(s.s.tot)}</b></div></div></div>`}).join('')}</div>`};
+render();
+})();
