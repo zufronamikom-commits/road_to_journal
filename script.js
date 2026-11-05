@@ -157,7 +157,7 @@ P=(c,l,t,h)=>`<div class="a ${c}" style="left:${l}cqw;top:${t}cqw">${h}</div>`,
 D=(l,t,h)=>`<i class="a cd" style="left:${l}cqw;top:${t}cqw;height:${h}cqw"></i>`,
 UL=l=>`<i class="a ul" style="left:${l}cqw;top:91.7cqw"></i>`,
 fg='https://flagcdn.com/h80/'+d.cc.toLowerCase()+'.png',
-bg=`<svg class="bg" viewBox="0 0 1254 1254" preserveAspectRatio="none"><defs><radialGradient id="g1" cx="1254" cy="0" r="600" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="currentColor" stop-opacity=".8"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></radialGradient><linearGradient id="g2" x1="0" y1="400" x2="0" y2="1100" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="currentColor" stop-opacity=".6"/><stop offset=".75" stop-color="currentColor" stop-opacity="0"/></linearGradient><linearGradient id="g4" x1="0" y1="553" x2="0" y2="1150" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="currentColor" stop-opacity=".4"/><stop offset=".75" stop-color="currentColor" stop-opacity="0"/></linearGradient><radialGradient id="g3" cx="1254" cy="1254" r="460" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="currentColor" stop-opacity=".5"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></radialGradient></defs><polygon points="1225,0 1254,0 1254,700 602,700" fill="url(#g1)"/><polygon points="1122,400 1254,555 1254,1254 800,1254 800,773" fill="url(#g2)"/><polygon points="1122,553 1254,705 1254,1254 800,1254 800,926" fill="url(#g4)"/><rect width="1254" height="1254" fill="url(#g3)"/><polyline points="800,773 1122,400 1254,555" fill="none" stroke="#19f0a0" stroke-opacity=".3" stroke-width="1.5"/><polyline points="850,870 1122,553 1254,705" fill="none" stroke="#19f0a0" stroke-opacity=".12" stroke-width="1.5"/></svg>`,
+bg=`<svg class="bg" viewBox="0 0 1254 1254" preserveAspectRatio="none"><defs><radialGradient id="g1" cx="1254" cy="0" r="600" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="currentColor" stop-opacity=".7"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></radialGradient><linearGradient id="g2" x1="0" y1="400" x2="0" y2="1100" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="currentColor" stop-opacity=".28"/><stop offset=".75" stop-color="currentColor" stop-opacity="0"/></linearGradient><linearGradient id="g4" x1="0" y1="553" x2="0" y2="1150" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="currentColor" stop-opacity=".16"/><stop offset=".75" stop-color="currentColor" stop-opacity="0"/></linearGradient><radialGradient id="g3" cx="1254" cy="1254" r="460" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="currentColor" stop-opacity=".3"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></radialGradient></defs><polygon points="1225,0 1254,0 1254,700 602,700" fill="url(#g1)"/><polygon points="1122,400 1254,555 1254,1254 800,1254 800,773" fill="url(#g2)"/><polygon points="1122,553 1254,705 1254,1254 800,1254 800,926" fill="url(#g4)"/><rect width="1254" height="1254" fill="url(#g3)"/><polyline points="800,773 1122,400 1254,555" fill="none" stroke="#19f0a0" stroke-opacity=".2" stroke-width="1.5"/><polyline points="850,870 1122,553 1254,705" fill="none" stroke="#19f0a0" stroke-opacity=".08" stroke-width="1.5"/></svg>`,
 logo=`<div class="a lg" style="left:9cqw;top:10.5cqw"><img src="RTJ.jpeg" alt="RTJ"></div>`;
 modal(`<div class="cw" style="--c:${k.c};--ring:${k.ring};--glow:${k.glow};--pill:linear-gradient(180deg,${k.p0},${k.p1})">${bg}${logo}${D(24.96,11,8)}
 ${P('road',28.55,12.5,'ROAD TO JOURNAL')}${P('tag2',28.55,16.1,'TRADE &nbsp;/&nbsp; DISCIPLINE &nbsp;/&nbsp; GROW')}
@@ -172,7 +172,7 @@ ${P('ck',67.7,55.25,'ENTRY')}${P('cq',67.7,57.4,esc(x.entry))}${P('ck',67.7,61.3
 ${P('pr cx',50,74.3,'PROUDLY PRESENTED TO:')}
 ${P('pb cx',50,77.6,`<span class="un">${esc(d.user)}</span><i class="pbd"></i><img class="fg" src="${fg}" alt="" onerror="this.style.visibility='hidden'"><span class="cn2">${esc(d.country)}</span>`)}
 ${P('bv cx',21.7,87.95,esc(d.date))}${UL(11.35)}${P('lb2 cx',21.7,92.7,'DATE')}
-${P('sg cx',50,85,`<img src="signature.png" alt="" onerror="this.style.display='none';this.nextSibling.style.display='block'"><span class="sgf">M. Zufron</span>`)}${P('lb2 cx',50,92.7,'CEO · M. ZUFRON')}
+${P('sg',44.3,85.2,`<img src="tandatangan.png" alt="" onerror="this.parentNode.classList.add('nf');this.remove()"><span class="sgf">M. Zufron</span>`)}${P('lb2 cx',50,92.7,'CEO · M. ZUFRON')}
 ${P('bv cx',79.15,87.95,fa(a.bal))}${UL(68.8)}${P('lb2 cx',79.15,92.7,'ACCOUNT SIZE')}</div>
 <div class="row" style="margin-top:14px"><button class="btn" onclick="dlCert(${id})">Download PNG</button><button class="btn sec" onclick="window.print()">Print</button><button class="btn sec" onclick="closeM()">Close</button></div>`,1)}
 
@@ -182,7 +182,7 @@ const d=certInfo(id);if(!d)return;const{x,w,a,k}=d,FF='Poppins,Inter,system-ui,s
 toast('Menyiapkan sertifikat…');
 try{await Promise.all([400,500,600,700].map(wt=>document.fonts.load(wt+' 20px Poppins')).concat(document.fonts.load('400 40px Caveat')))}catch(e){}
 const ld=(s,cors)=>new Promise(ok=>{const i=new Image();if(cors)i.crossOrigin='anonymous';i.onload=()=>ok(i);i.onerror=()=>ok(null);i.src=s});
-const[logo,sig,flag]=await Promise.all([ld('RTJ.jpeg'),ld('signature.png'),ld('https://flagcdn.com/h80/'+d.cc.toLowerCase()+'.png',1)]);
+const[logo,sig,flag]=await Promise.all([ld('RTJ.jpeg'),ld('tandatangan.png'),ld('https://flagcdn.com/h80/'+d.cc.toLowerCase()+'.png',1)]);
 const rgba=(h,al)=>{const n=parseInt(h.slice(1),16);return`rgba(${n>>16},${n>>8&255},${n&255},${al})`};
 const draw=(lg,sg)=>{
 const cv=document.createElement('canvas');cv.width=cv.height=SZ;const g=cv.getContext('2d'),b='#0e8d62';
@@ -195,12 +195,12 @@ const lgd=(y0,y1,a0)=>{const q=g.createLinearGradient(0,y0,0,y1);q.addColorStop(
 const poly=pts=>{g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath()};
 /* background (selalu hijau) */
 g.fillStyle='#04090a';g.fillRect(0,0,SZ,SZ);
-g.fillStyle=rg(1254,0,600,.8);poly([[1225,0],[1254,0],[1254,700],[602,700]]);g.fill();
-g.fillStyle=lgd(400,1100,.6);poly([[1122,400],[1254,555],[1254,1254],[800,1254],[800,773]]);g.fill();
-g.fillStyle=lgd(553,1150,.4);poly([[1122,553],[1254,705],[1254,1254],[800,1254],[800,926]]);g.fill();
-g.fillStyle=rg(1254,1254,460,.5);g.fillRect(0,0,SZ,SZ);
-g.lineWidth=1.5;g.strokeStyle=rgba('#19f0a0',.3);g.beginPath();g.moveTo(800,773);g.lineTo(1122,400);g.lineTo(1254,555);g.stroke();
-g.strokeStyle=rgba('#19f0a0',.12);g.beginPath();g.moveTo(850,870);g.lineTo(1122,553);g.lineTo(1254,705);g.stroke();
+g.fillStyle=rg(1254,0,600,.7);poly([[1225,0],[1254,0],[1254,700],[602,700]]);g.fill();
+g.fillStyle=lgd(400,1100,.28);poly([[1122,400],[1254,555],[1254,1254],[800,1254],[800,773]]);g.fill();
+g.fillStyle=lgd(553,1150,.16);poly([[1122,553],[1254,705],[1254,1254],[800,1254],[800,926]]);g.fill();
+g.fillStyle=rg(1254,1254,460,.3);g.fillRect(0,0,SZ,SZ);
+g.lineWidth=1.5;g.strokeStyle=rgba('#19f0a0',.2);g.beginPath();g.moveTo(800,773);g.lineTo(1122,400);g.lineTo(1254,555);g.stroke();
+g.strokeStyle=rgba('#19f0a0',.08);g.beginPath();g.moveTo(850,870);g.lineTo(1122,553);g.lineTo(1254,705);g.stroke();
 /* logo */
 if(lg){g.save();g.beginPath();g.rect(9*U,10.5*U,13*U,8.78*U);g.clip();g.globalCompositeOperation='screen';g.drawImage(lg,(9-6.48)*U,(10.5-7.92)*U,25.79*U,lg.naturalHeight/lg.naturalWidth*25.79*U);g.restore()}
 /* garis pemisah */
@@ -238,7 +238,7 @@ g.restore();cx+=fd+2;tx(d.country,cx,bt+(bh-cs)/2,cs,400,'#aab3b6',.1)}
 /* footer */
 const col=(cx,v,lb)=>{tx(v,cx,87.95,2.7,600,'#fff',0,'c');g.fillStyle='rgba(255,255,255,.25)';g.fillRect((cx-10.35)*U,91.7*U,20.7*U,2);tx(lb,cx,92.7,1.6,500,'#98a3a6',.14,'c')};
 col(21.7,d.date,'DATE');col(79.15,fa(a.bal),'ACCOUNT SIZE');
-if(sg){const h=6.4*U,ww=sg.width/sg.height*h;g.drawImage(sg,50*U-ww/2,85*U,ww,h)}else tx('M. Zufron',50,85.5,5,400,'#fff',0,'c','Caveat,cursive');
+if(sg){g.save();g.globalCompositeOperation='screen';g.drawImage(sg,sg.width*100/791,sg.height*110/550,sg.width*580/791,sg.height*315/550,44.3*U,85.2*U,11.4*U,6.2*U);g.restore()}else tx('M. Zufron',50,85.5,5,400,'#fff',0,'c','Caveat,cursive');
 tx('CEO · M. ZUFRON',50,92.7,1.6,500,'#98a3a6',.12,'c');
 return cv};
 const out=cv=>new Promise((ok,er)=>{try{cv.toBlob(bl=>bl?ok(bl):er(new Error('blob')),'image/png')}catch(e){er(e)}});
