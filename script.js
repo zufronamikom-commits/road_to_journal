@@ -138,84 +138,115 @@ function closeM(){$('#md').classList.remove('on')}
 $('#md').onclick=e=>{if(e.target.id=='md')closeM()};
 function lbT(id){const x=T().find(y=>y.id==id);if(!x||!x.shot)return;modal(`<div class="row sp" style="margin-bottom:12px"><b>${x.sym} · ${x.date}</b><button class="ib" onclick="closeM()">✕</button></div><img src="${x.shot}" style="width:100%;border-radius:10px;display:block"><div class="row sp" style="margin-top:14px"><b class="${cls(x.pnl)}">${fm(x.pnl)}</b><button class="btn sec" onclick="detail(${id})">Open trade</button></div>`,1)}
 function detail(id){const x=T().find(y=>y.id==id);modal(`<div class="row sp"><b style="font-size:18px">${x.sym} · ${x.dir}</b><button class="ib" onclick="closeM()">✕</button></div><div class="big ${cls(x.pnl)}">${fm(x.pnl)}</div><div class="grid ge" style="margin:16px 0">${[['Date',x.date],['Strategy',esc(x.strat)],['Entry',x.entry],['Exit',x.exit],['Stop Loss',x.sl],['Take Profit',x.tp],['RR',x.rr],['Lot Size',x.lot],['Session',x.sess],['Emotion',x.emo]].map(a=>`<div><div class="lab">${a[0]}</div>${a[1]}</div>`).join('')}</div><div class="tags" style="margin:0 0 14px">${x.conf.map(c=>`<span class="tag sug">${c}</span>`).join('')}</div>${x.note?`<p class="sm">${esc(x.note)}</p>`:''}${x.shot?`<img src="${x.shot}" style="width:100%;border-radius:10px;cursor:zoom-in;margin-bottom:14px" onclick="lbT(${id})">`:'<div class="card sm" style="text-align:center;margin-bottom:14px">No screenshot</div>'}<div class="row"><button class="btn" onclick="cert(${id})">Print Certificate</button><button class="btn sec" onclick="editTrade(${id})">Edit</button><button class="btn dg" onclick="del(${id})">Delete</button></div>`)}
-function cert(id){const x=T().find(y=>y.id==id),w=x.pnl>=0,c=w?'#19f0a0':'#ff5d5d',a=ACC[S.acc],d=new Date(x.date+'T00:00:00'),ds=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),no='RTC-'+x.date.slice(0,4)+'-'+x.date.slice(5,7)+x.date.slice(8)+'-'+String(x.id).padStart(4,'0');
-const P=(k,l,t,h)=>`<div class="a ${k}" style="left:${l}cqw;top:${t}cqw">${h}</div>`,D=(l,t,h)=>`<i class="a cd" style="left:${l}cqw;top:${t}cqw;height:${h}cqw"></i>`;
-const arrow=x.dir=='Buy'?'M7 17L17 7M9 7h8v8':'M7 7L17 17M17 9v8H9';
-const bg=`<svg class="bg" viewBox="0 0 1254 1254" preserveAspectRatio="none" style="--b:${w?'#0e8d62':'#a32b2b'}"><defs><radialGradient id="g1" cx="1254" cy="0" r="600" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="currentColor" stop-opacity=".8"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></radialGradient><linearGradient id="g2" x1="0" y1="400" x2="0" y2="1100" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="currentColor" stop-opacity=".6"/><stop offset=".75" stop-color="currentColor" stop-opacity="0"/></linearGradient><linearGradient id="g4" x1="0" y1="553" x2="0" y2="1150" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="currentColor" stop-opacity=".4"/><stop offset=".75" stop-color="currentColor" stop-opacity="0"/></linearGradient><radialGradient id="g3" cx="1254" cy="1254" r="460" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="currentColor" stop-opacity=".5"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></radialGradient></defs><polygon points="1225,0 1254,0 1254,700 602,700" fill="url(#g1)"/><polygon points="1122,400 1254,555 1254,1254 800,1254 800,773" fill="url(#g2)"/><polygon points="1122,553 1254,705 1254,1254 800,1254 800,926" fill="url(#g4)"/><rect width="1254" height="1254" fill="url(#g3)"/><polyline points="800,773 1122,400 1254,555" fill="none" stroke="${c}" stroke-opacity=".3" stroke-width="1.5"/><polyline points="850,870 1122,553 1254,705" fill="none" stroke="${c}" stroke-opacity=".12" stroke-width="1.5"/></svg>`;
-/* LOGO: diambil dari file RTJ.jpeg (satu folder dengan index.html), di-crop lewat CSS */
-const logo=`<div class="a lg" style="left:9cqw;top:10.5cqw"><img src="RTJ.jpeg" alt="RTJ"></div>`;
-modal(`<div class="cw" style="--c:${c}">${bg}${logo}${D(24.96,11,8)}
+
+/* ---------- data sertifikat (dipakai tampilan & PNG) ---------- */
+function certInfo(id){const x=T().find(y=>y.id==id);if(!x)return null;
+const w=x.pnl>=0,a=ACC[S.acc],cc=S.country||'ID',
+k=w?{c:'#22dd00',p0:'#22dd00',p1:'#22dd00',ring:'#22dd00',glow:'rgba(34,221,0,.35)'}:{c:'#ff0000',p0:'#e24646',p1:'#c42a2a',ring:'#d82f2f',glow:'rgba(255,0,0,.3)'};
+let cname=cc;try{cname=new Intl.DisplayNames(['en'],{type:'region'}).of(cc)||cc}catch(e){}
+return{x,w,a,k,cc,
+no:'RTC-'+x.date.slice(0,4)+'-'+x.date.slice(5,7)+x.date.slice(8)+'-'+String(x.id).padStart(4,'0'),
+date:x.date.slice(5,7)+'/'+x.date.slice(8,10)+'/'+x.date.slice(0,4),
+user:(S.prof.user||S.prof.name||'USERNAME').toUpperCase(),
+country:cname.toUpperCase(),sym:x.sym,nm:NM[x.sym]||'',
+arrow:x.dir=='Buy'?'M7 17L17 7M9 7h8v8':'M7 7L17 17M17 9v8H9'}}
+
+/* ---------- tampilan sertifikat (modal) ---------- */
+function cert(id){const d=certInfo(id);if(!d)return;const{x,w,a,k}=d,
+P=(c,l,t,h)=>`<div class="a ${c}" style="left:${l}cqw;top:${t}cqw">${h}</div>`,
+D=(l,t,h)=>`<i class="a cd" style="left:${l}cqw;top:${t}cqw;height:${h}cqw"></i>`,
+UL=l=>`<i class="a ul" style="left:${l}cqw;top:91.7cqw"></i>`,
+fg='https://flagcdn.com/h80/'+d.cc.toLowerCase()+'.png',
+bg=`<svg class="bg" viewBox="0 0 1254 1254" preserveAspectRatio="none"><defs><radialGradient id="g1" cx="1254" cy="0" r="600" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="currentColor" stop-opacity=".8"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></radialGradient><linearGradient id="g2" x1="0" y1="400" x2="0" y2="1100" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="currentColor" stop-opacity=".6"/><stop offset=".75" stop-color="currentColor" stop-opacity="0"/></linearGradient><linearGradient id="g4" x1="0" y1="553" x2="0" y2="1150" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="currentColor" stop-opacity=".4"/><stop offset=".75" stop-color="currentColor" stop-opacity="0"/></linearGradient><radialGradient id="g3" cx="1254" cy="1254" r="460" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="currentColor" stop-opacity=".5"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></radialGradient></defs><polygon points="1225,0 1254,0 1254,700 602,700" fill="url(#g1)"/><polygon points="1122,400 1254,555 1254,1254 800,1254 800,773" fill="url(#g2)"/><polygon points="1122,553 1254,705 1254,1254 800,1254 800,926" fill="url(#g4)"/><rect width="1254" height="1254" fill="url(#g3)"/><polyline points="800,773 1122,400 1254,555" fill="none" stroke="#19f0a0" stroke-opacity=".3" stroke-width="1.5"/><polyline points="850,870 1122,553 1254,705" fill="none" stroke="#19f0a0" stroke-opacity=".12" stroke-width="1.5"/></svg>`,
+logo=`<div class="a lg" style="left:9cqw;top:10.5cqw"><img src="RTJ.jpeg" alt="RTJ"></div>`;
+modal(`<div class="cw" style="--c:${k.c};--ring:${k.ring};--glow:${k.glow};--pill:linear-gradient(180deg,${k.p0},${k.p1})">${bg}${logo}${D(24.96,11,8)}
 ${P('road',28.55,12.5,'ROAD TO JOURNAL')}${P('tag2',28.55,16.1,'TRADE &nbsp;/&nbsp; DISCIPLINE &nbsp;/&nbsp; GROW')}
-${P('cno',73.5,10.4,'CERTIFICATE NO.')}${P('cnv',73.5,12.9,no)}${P('cno',73.5,17.3,'DATE ISSUED')}${P('cnv',73.5,19.8,ds)}
-${P('tr',8.6,28.5,'TRADE RESULT')}${P('amt',8.8,31.7,fm2(x.pnl))}${P('cp',8.6,43.9,w?'PROFIT':'LOSS')}
-${P('ck',8.9,55.4,'INSTRUMENT')}${P('cm',8.9,58.9,esc(x.sym))}${P('cs',8.9,64.25,NM[x.sym]||'&nbsp;')}
-${D(34.05,55.3,11)}
-${P('ck',39.1,55.4,'DIRECTION')}${P('dr',38.9,58.8,`<svg viewBox="0 0 24 24"><path d="${arrow}"/></svg>${x.dir.toUpperCase()}`)}
-${D(62.84,55.3,11)}
-${P('ck',67.7,55.4,'ACCOUNT SIZE')}${P('cm',67.7,58.9,fa(a.bal))}${P('cs',67.7,64.2,'('+a.type+')')}
-<i class="a cd" style="left:8.9cqw;top:71.77cqw;width:82.2cqw;height:1px"></i>
-${[['ENTRY',x.entry,9],['EXIT',x.exit,32.2],['STOP LOSS',x.sl,54.1],['TAKE PROFIT',x.tp,75.8]].map(r=>P('ck',r[2],76.2,r[0])+P('cq',r[2],79,esc(r[1]))).join('')}
-${D(27.99,76,6.3)}${D(49.92,76,6.3)}${D(71.53,76,6.3)}</div>
+${P('cno',73.5,10.4,'CERTIFICATE NO.')}${P('cnv',73.5,12.9,d.no)}
+${P('tr',8.6,26.7,'TRADE RESULT')}${P('amt',8.8,31.7,fm2(x.pnl))}${P('cp',8.6,46.15,w?'PROFIT':'LOSS')}
+${P('ck',8.9,55.4,'INSTRUMENT')}${P('cm',8.9,59,esc(d.sym))}${P('cs',8.9,64.3,esc(d.nm)||'&nbsp;')}
+${D(34.07,55.2,11.1)}
+${P('ck',39.1,55.4,'DIRECTION')}${P('dr',38.9,58.8,`<svg viewBox="0 0 24 24"><path d="${d.arrow}"/></svg>${x.dir.toUpperCase()}`)}
+${D(62.8,55.2,11.1)}
+${P('ck',67.7,55.25,'ENTRY')}${P('cq',67.7,57.4,esc(x.entry))}${P('ck',67.7,61.3,'EXIT')}${P('cq',67.7,63.4,esc(x.exit))}
+<i class="a cd" style="left:8.9cqw;top:71.8cqw;width:82.1cqw;height:1px"></i>
+${P('pr cx',50,74.3,'PROUDLY PRESENTED TO:')}
+${P('pb cx',50,77.6,`<span class="un">${esc(d.user)}</span><i class="pbd"></i><img class="fg" src="${fg}" alt="" onerror="this.style.visibility='hidden'"><span class="cn2">${esc(d.country)}</span>`)}
+${P('bv cx',21.7,87.95,esc(d.date))}${UL(11.35)}${P('lb2 cx',21.7,92.7,'DATE')}
+${P('sg cx',50,85,`<img src="signature.png" alt="" onerror="this.style.display='none';this.nextSibling.style.display='block'"><span class="sgf">M. Zufron</span>`)}${P('lb2 cx',50,92.7,'CEO · M. ZUFRON')}
+${P('bv cx',79.15,87.95,fa(a.bal))}${UL(68.8)}${P('lb2 cx',79.15,92.7,'ACCOUNT SIZE')}</div>
 <div class="row" style="margin-top:14px"><button class="btn" onclick="dlCert(${id})">Download PNG</button><button class="btn sec" onclick="window.print()">Print</button><button class="btn sec" onclick="closeM()">Close</button></div>`,1)}
-/* ---------- certificate PNG download (digambar langsung di canvas 1254x1254) ---------- */
+
+/* ---------- download PNG (digambar di canvas 1254x1254) ---------- */
 async function dlCert(id){
-const x=T().find(y=>y.id==id);if(!x)return;
-const w=x.pnl>=0,c=w?'#19f0a0':'#ff5d5d',b=w?'#0e8d62':'#a32b2b',a=ACC[S.acc],d=new Date(x.date+'T00:00:00'),
-ds=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
-no='RTC-'+x.date.slice(0,4)+'-'+x.date.slice(5,7)+x.date.slice(8)+'-'+String(x.id).padStart(4,'0'),
-FF='Inter,system-ui,sans-serif',SZ=1254,U=SZ/100;
+const d=certInfo(id);if(!d)return;const{x,w,a,k}=d,FF='Poppins,Inter,system-ui,sans-serif',SZ=1254,U=SZ/100;
 toast('Menyiapkan sertifikat…');
-try{await Promise.all([500,600,700,800].map(wt=>document.fonts.load(wt+' 20px Inter')))}catch(e){}
-let logo=null;try{logo=await new Promise((ok,er)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=er;i.src='RTJ.jpeg'})}catch(e){}
+try{await Promise.all([400,500,600,700].map(wt=>document.fonts.load(wt+' 20px Poppins')).concat(document.fonts.load('400 40px Caveat')))}catch(e){}
+const ld=(s,cors)=>new Promise(ok=>{const i=new Image();if(cors)i.crossOrigin='anonymous';i.onload=()=>ok(i);i.onerror=()=>ok(null);i.src=s});
+const[logo,sig,flag]=await Promise.all([ld('RTJ.jpeg'),ld('signature.png'),ld('https://flagcdn.com/h80/'+d.cc.toLowerCase()+'.png',1)]);
 const rgba=(h,al)=>{const n=parseInt(h.slice(1),16);return`rgba(${n>>16},${n>>8&255},${n&255},${al})`};
-const draw=lg=>{
-const cv=document.createElement('canvas');cv.width=cv.height=SZ;const g=cv.getContext('2d');
-const mw=(s,sz,wt,ls)=>{g.font=`${wt} ${sz*U}px ${FF}`;let t=0;for(const ch of s)t+=g.measureText(ch).width+ls*sz*U;return t};
-const tx=(s,l,t,sz,wt,col,ls=0,X0)=>{g.font=`${wt} ${sz*U}px ${FF}`;g.fillStyle=col;g.textBaseline='alphabetic';g.textAlign='left';const fs=sz*U,Y=t*U+fs*.864;let X=X0!=null?X0:l*U;for(const ch of s){g.fillText(ch,X,Y);X+=g.measureText(ch).width+ls*fs}};
+const draw=(lg,sg)=>{
+const cv=document.createElement('canvas');cv.width=cv.height=SZ;const g=cv.getContext('2d'),b='#0e8d62';
+const F=(sz,wt,ff)=>`${wt} ${sz*U}px ${ff||FF}`;
+const mw=(s,sz,wt,ls,ff)=>{g.font=F(sz,wt,ff);let t=0;for(const ch of s)t+=g.measureText(ch).width+ls*sz*U;return t};
+const tx=(s,l,t,sz,wt,col,ls=0,al='l',ff)=>{const fs=sz*U;let X=l*U;if(al=='c')X-=mw(s,sz,wt,ls,ff)/2;g.font=F(sz,wt,ff);g.fillStyle=col;g.textBaseline='alphabetic';g.textAlign='left';const Y=t*U+fs*.85;for(const ch of s){g.fillText(ch,X,Y);X+=g.measureText(ch).width+ls*fs}};
 const rr=(l,t,W,H,r)=>{g.beginPath();g.moveTo(l+r,t);g.arcTo(l+W,t,l+W,t+H,r);g.arcTo(l+W,t+H,l,t+H,r);g.arcTo(l,t+H,l,t,r);g.arcTo(l,t,l+W,t,r);g.closePath()};
 const rg=(cx,cy,r,a0)=>{const q=g.createRadialGradient(cx,cy,0,cx,cy,r);q.addColorStop(0,rgba(b,a0));q.addColorStop(1,rgba(b,0));return q};
 const lgd=(y0,y1,a0)=>{const q=g.createLinearGradient(0,y0,0,y1);q.addColorStop(0,rgba(b,a0));q.addColorStop(.75,rgba(b,0));q.addColorStop(1,rgba(b,0));return q};
 const poly=pts=>{g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath()};
-/* background */
+/* background (selalu hijau) */
 g.fillStyle='#04090a';g.fillRect(0,0,SZ,SZ);
 g.fillStyle=rg(1254,0,600,.8);poly([[1225,0],[1254,0],[1254,700],[602,700]]);g.fill();
 g.fillStyle=lgd(400,1100,.6);poly([[1122,400],[1254,555],[1254,1254],[800,1254],[800,773]]);g.fill();
 g.fillStyle=lgd(553,1150,.4);poly([[1122,553],[1254,705],[1254,1254],[800,1254],[800,926]]);g.fill();
 g.fillStyle=rg(1254,1254,460,.5);g.fillRect(0,0,SZ,SZ);
-g.lineWidth=1.5;g.strokeStyle=rgba(c,.3);g.beginPath();g.moveTo(800,773);g.lineTo(1122,400);g.lineTo(1254,555);g.stroke();
-g.strokeStyle=rgba(c,.12);g.beginPath();g.moveTo(850,870);g.lineTo(1122,553);g.lineTo(1254,705);g.stroke();
+g.lineWidth=1.5;g.strokeStyle=rgba('#19f0a0',.3);g.beginPath();g.moveTo(800,773);g.lineTo(1122,400);g.lineTo(1254,555);g.stroke();
+g.strokeStyle=rgba('#19f0a0',.12);g.beginPath();g.moveTo(850,870);g.lineTo(1122,553);g.lineTo(1254,705);g.stroke();
 /* logo */
 if(lg){g.save();g.beginPath();g.rect(9*U,10.5*U,13*U,8.78*U);g.clip();g.globalCompositeOperation='screen';g.drawImage(lg,(9-6.48)*U,(10.5-7.92)*U,25.79*U,lg.naturalHeight/lg.naturalWidth*25.79*U);g.restore()}
-/* dividers */
+/* garis pemisah */
 const LN='rgba(255,255,255,.22)',vd=(l,t,h)=>{g.fillStyle=LN;g.fillRect(l*U,t*U,2,h*U)};
-vd(24.96,11,8);vd(34.05,55.3,11);vd(62.84,55.3,11);vd(27.99,76,6.3);vd(49.92,76,6.3);vd(71.53,76,6.3);
-g.fillStyle=LN;g.fillRect(8.9*U,71.77*U,82.2*U,2);
+vd(24.96,11,8);vd(34.07,55.2,11.1);vd(62.8,55.2,11.1);
+g.fillStyle=LN;g.fillRect(8.9*U,71.8*U,82.1*U,2);
 /* header */
 tx('ROAD TO JOURNAL',28.55,12.5,2.1,500,'#fff',.3);
 tx('TRADE  /  DISCIPLINE  /  GROW',28.55,16.1,1.4,500,'#98a3a6',.24);
-tx('CERTIFICATE NO.',73.5,10.4,1.36,500,'#98a3a6',.14);tx(no,73.5,12.9,1.95,500,'#fff');
-tx('DATE ISSUED',73.5,17.3,1.36,500,'#98a3a6',.14);tx(ds,73.5,19.8,1.95,500,'#fff');
-/* result */
-tx('TRADE RESULT',8.6,28.5,2.1,500,'#98a3a6',.2);
-g.save();g.shadowColor=rgba(c,.3);g.shadowBlur=3*U;tx(fm2(x.pnl),8.8,31.7,9.9,800,c,-.025);g.restore();
-g.fillStyle=c;rr(8.6*U,43.9*U,16.35*U,3.9*U,3.9*U/2);g.fill();
-{const t=w?'PROFIT':'LOSS',tw=mw(t,2,800,.2),pl=.2*2*U,bx=8.6*U,bw=16.35*U;tx(t,0,43.9+(3.9-2)/2,2,800,'#04120c',.2,bx+pl+(bw-pl-tw)/2)}
-/* instrument / direction / account */
-tx('INSTRUMENT',8.9,55.4,1.42,500,'#98a3a6',.18);tx(x.sym,8.9,58.9,3.75,700,'#fff',-.01);tx(NM[x.sym]||'',8.9,64.25,1.8,400,'#8d989b');
+tx('CERTIFICATE NO.',73.5,10.4,1.36,500,'#98a3a6',.14);tx(d.no,73.5,12.9,1.95,500,'#fff');
+/* hasil */
+tx('TRADE RESULT',8.6,26.7,2.1,500,'#98a3a6',.2);
+tx(fm2(x.pnl),8.8,31.7,9.9,700,k.c,-.025);
+{const gr=g.createLinearGradient(0,46.15*U,0,50.1*U);gr.addColorStop(0,k.p0);gr.addColorStop(1,k.p1);g.fillStyle=gr;rr(8.6*U,46.15*U,16.3*U,3.95*U,3.95*U/2);g.fill();
+tx(w?'PROFIT':'LOSS',8.6+8.15+.25*1.9/2,46.15+(3.95-1.9)/2,1.9,700,'#0a0a0a',.25,'c')}
+/* instrument / direction / entry-exit */
+tx('INSTRUMENT',8.9,55.4,1.42,500,'#98a3a6',.18);tx(d.sym,8.9,59,3.5,600,'#fff');tx(d.nm,8.9,64.3,1.8,400,'#8d989b');
 tx('DIRECTION',39.1,55.4,1.42,500,'#98a3a6',.18);
-{const l=38.9*U,t=58.8*U,W=18.2*U,H=5.3*U,bw=.26*U;g.strokeStyle=c;g.lineWidth=bw;rr(l+bw/2,t+bw/2,W-bw,H-bw,H/2);g.stroke();
+{const l=38.9*U,t=58.8*U,W=18.2*U,H=5.3*U,bw=.26*U;g.strokeStyle=k.ring;g.lineWidth=bw;rr(l+bw/2,t+bw/2,W-bw,H-bw,H/2);g.stroke();
 const txt=x.dir.toUpperCase(),tw=mw(txt,2.2,700,.18),ic=2.4*U,gap=1.4*U,tot=ic+gap+tw,sx=l+(W-tot)/2;
-g.save();g.translate(sx,t+(H-ic)/2);g.scale(ic/24,ic/24);g.strokeStyle=c;g.lineWidth=3;g.lineCap='round';g.lineJoin='round';g.stroke(new Path2D(x.dir=='Buy'?'M7 17L17 7M9 7h8v8':'M7 7L17 17M17 9v8H9'));g.restore();
-tx(txt,0,58.8+(5.3-2.2)/2,2.2,700,c,.18,sx+ic+gap)}
-tx('ACCOUNT SIZE',67.7,55.4,1.42,500,'#98a3a6',.18);tx(fa(a.bal),67.7,58.9,3.75,700,'#fff',-.01);tx('('+a.type+')',67.7,64.2,1.8,400,'#8d989b');
-/* price row */
-[['ENTRY',x.entry,9],['EXIT',x.exit,32.2],['STOP LOSS',x.sl,54.1],['TAKE PROFIT',x.tp,75.8]].forEach(r=>{tx(r[0],r[2],76.2,1.42,500,'#98a3a6',.18);tx(String(r[1]),r[2],79,2.35,600,'#fff')});
+g.save();g.translate(sx,t+(H-ic)/2);g.scale(ic/24,ic/24);g.strokeStyle=k.c;g.lineWidth=3;g.lineCap='round';g.lineJoin='round';g.stroke(new Path2D(d.arrow));g.restore();
+tx(txt,(sx+ic+gap)/U,58.8+(5.3-2.2)/2,2.2,700,k.c,.18)}
+tx('ENTRY',67.7,55.25,1.42,500,'#98a3a6',.18);tx(String(x.entry),67.7,57.4,2.5,600,'#fff');
+tx('EXIT',67.7,61.3,1.42,500,'#98a3a6',.18);tx(String(x.exit),67.7,63.4,2.5,600,'#fff');
+/* presented to */
+tx('PROUDLY PRESENTED TO:',50,74.3,2,400,'#aab3b6',.12,'c');
+{const us=2.45,cs=1.7,fd=3.6,uw=mw(d.user,us,700,.01)/U,cw2=mw(d.country,cs,400,.1)/U,bw2=uw+2+.08+2+fd+2+cw2+5.9,bl=50-bw2/2,bt=77.6,bh=5.3;
+g.save();g.shadowColor=k.glow;g.shadowBlur=2.2*U;g.fillStyle='rgba(0,0,0,.35)';rr(bl*U,bt*U,bw2*U,bh*U,1.4*U);g.fill();g.restore();
+g.strokeStyle=k.ring;g.lineWidth=.14*U;rr(bl*U,bt*U,bw2*U,bh*U,1.4*U);g.stroke();
+let cx=bl+2.95;tx(d.user,cx,bt+(bh-us)/2,us,700,'#fff',.01);cx+=uw+2;
+g.fillStyle='rgba(255,255,255,.25)';g.fillRect(cx*U,(bt+(bh-2.3)/2)*U,2,2.3*U);cx+=.08+2;
+const fy=bt+(bh-fd)/2;g.save();g.beginPath();g.arc((cx+fd/2)*U,(fy+fd/2)*U,fd/2*U,0,7);g.clip();
+if(flag){const s=Math.max(fd*U/flag.width,fd*U/flag.height),fw=flag.width*s,fh=flag.height*s;g.drawImage(flag,(cx+fd/2)*U-fw/2,(fy+fd/2)*U-fh/2,fw,fh)}else{g.fillStyle='#333';g.fillRect(cx*U,fy*U,fd*U,fd*U)}
+g.restore();cx+=fd+2;tx(d.country,cx,bt+(bh-cs)/2,cs,400,'#aab3b6',.1)}
+/* footer */
+const col=(cx,v,lb)=>{tx(v,cx,87.95,2.7,600,'#fff',0,'c');g.fillStyle='rgba(255,255,255,.25)';g.fillRect((cx-10.35)*U,91.7*U,20.7*U,2);tx(lb,cx,92.7,1.6,500,'#98a3a6',.14,'c')};
+col(21.7,d.date,'DATE');col(79.15,fa(a.bal),'ACCOUNT SIZE');
+if(sg){const h=6.4*U,ww=sg.width/sg.height*h;g.drawImage(sg,50*U-ww/2,85*U,ww,h)}else tx('M. Zufron',50,85.5,5,400,'#fff',0,'c','Caveat,cursive');
+tx('CEO · M. ZUFRON',50,92.7,1.6,500,'#98a3a6',.12,'c');
 return cv};
 const out=cv=>new Promise((ok,er)=>{try{cv.toBlob(bl=>bl?ok(bl):er(new Error('blob')),'image/png')}catch(e){er(e)}});
 let blob,noLogo=false;
-try{blob=await out(draw(logo))}catch(e){noLogo=true;try{blob=await out(draw(null))}catch(e2){return toast('Gagal membuat gambar sertifikat')}}
+try{blob=await out(draw(logo,sig))}catch(e){noLogo=true;try{blob=await out(draw(null,null))}catch(e2){return toast('Gagal membuat gambar sertifikat')}}
 const u=URL.createObjectURL(blob),el=document.createElement('a');el.href=u;el.download='RTJ-certificate-'+x.sym+'-'+x.date+'.png';document.body.appendChild(el);el.click();el.remove();setTimeout(()=>URL.revokeObjectURL(u),2e3);
 toast(noLogo?'Sertifikat diunduh (tanpa logo: buka lewat hosting/server agar logo ikut)':'Sertifikat diunduh')}
+
 function resetM(){modal(`<b style="font-size:17px">Reset data ${esc(S.acc)}?</b><p class="sm">Hanya trade akun ini yang dihapus. Akun lain aman.</p><div class="row"><button class="btn dg" onclick="ACC[S.acc].t=[];closeM();render();toast('Data akun direset')">Ya, reset</button><button class="btn sec" onclick="closeM()">Batal</button></div>`)}
 /* ---------- accounts (editable) ---------- */
 function accSel(){$('#accSel').innerHTML=Object.keys(ACC).map(a=>`<option value="${esc(a)}" ${a==S.acc?'selected':''}>${esc(a)}</option>`).join('')}
